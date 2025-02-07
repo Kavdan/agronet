@@ -1,0 +1,11 @@
+{
+  "name": "agronet_server",
+  "version": "1.0.0",
+  "description": "Forum for agronomious, biologists and so on",
+  "main": "./src/app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
