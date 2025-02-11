@@ -172,7 +172,7 @@ class UserService {
   }
 
   async getUsers() {
-    const users = userModel.findAll();
+    const users = await userModel.findAll();
     if(!users) throw ApiError.BadRequest("Ошибка в getusers()")
     return users;
   }
