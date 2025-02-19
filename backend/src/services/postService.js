@@ -1,10 +1,12 @@
 const db = require("../database");
 const PostDto = require("../dtos/postDto");
 const ApiError = require("../exceptions/api-error");
+const commentModel = require("../models/commentModel");
 const postModel = require("../models/postModel");
 const postTagModel = require("../models/postTagModel");
 const tagModel = require("../models/tagModel");
 const userModel = require("../models/userModel");
+const commentService = require("./commentService");
 const tagService = require("./tagService");
 
 class PostService {
@@ -26,10 +28,10 @@ class PostService {
 
       await tagService.addTags(post.id, tags, transaction);
 
-      transaction.commit();
+      await transaction.commit();
       return postData;
     } catch (e) {
-      transaction.rollback();
+      await transaction.rollback();
       throw e;
     }
   }
@@ -57,10 +59,10 @@ class PostService {
 
       await tagService.addTags(post.id, tags, transaction);
 
-      transaction.commit();
+      await transaction.commit();
       return postData;
     } catch (e) {
-      transaction.rollback();
+      await transaction.rollback();
       throw e;
     }
   }
@@ -83,12 +85,45 @@ class PostService {
 
       const postData = new PostDto(foundPost);
 
-      transaction.commit();
+      await transaction.commit();
       return postData;
     } catch (e) {
-      transaction.rollback();
+      await transaction.rollback();
       throw e;
     }
+  }
+
+  async getAllPosts() {
+    try {
+      const posts = await postModel.findAll({
+        include: {
+          model: tagModel,
+          through: { attributes: [] }, // Чтобы избежать выборки атрибутов из таблицы связей
+          attributes: ['name'] // Только названия тегов
+        }
+      });
+  
+      const postsWithTags = posts.map(post => {
+        const tags = post.tags.map(tag => tag.name); // Получаем массив названий тегов
+        return {
+          ...post.toJSON(),
+          tags
+        };
+      });
+  
+      return postsWithTags;
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+
+  async getPostById(id) {
+    const post = await postModel.findOne({where: {id}});
+    const tags = await tagService.getTags(id);
+    const comments = await commentService.getAllByPostId(id);
+
+    return {...post.dataValues, tags, comments};
   }
 }
 

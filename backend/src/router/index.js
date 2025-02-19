@@ -8,29 +8,30 @@ const commentModel = require('../models/commentModel');
 const commentController = require('../controllers/commentController');
 
 router.post("/signup",
-    body('email').isEmail(),
-    body('password').isLength({min: 3, max: 32}),
-    body('username').isLength({min: 1, max: 20}),
+    body('email').isEmail().withMessage("Ведите корректный email!"),
+    body('password').isLength({min: 8, max: 32}).withMessage("Пароль должен соддержать минимум 8 символов!"),
+    body('username').isLength({min: 1, max: 20}).withMessage("Ведите корректное имя пользователя!"),
     userController.signup
 );
 
 router.post("/signin", 
-    body('email').isEmail(),
-    body('password').isLength({min: 3, max: 32}),
+    body('email').isEmail().withMessage("Ведите корректный email!"),
+    body('password').isLength({min: 8, max: 32}).withMessage("Пароль должен соддержать минимум 8 символов!"),
     userController.signin
 );
 
 router.post("/signout", userController.signout);
 
-router.post("/refresh", userController.refresh);
+router.get("/refresh", userController.refresh);
 
 router.get('/activate/:link', userController.activate);
 router.get('/getusers', userController.getUsers)
 
 router.post(
   "/createpost",
-  body("title").isLength({ min: 3, max: 200 }),
-  body("content").isLength({ min: 2, max: 1000 }),
+  body("title").isLength({ min: 3, max: 200 }).withMessage("Длинна заголовка должна быть больше 3 символов!"),
+  body("content").isLength({ min: 2, max: 1000 }).withMessage("Длинна текста должна быть больше 3 символов!"),
+  body("tags").matches(/^[a-zа-яА-ЯA-Z0-9_]+$/).withMessage("Теги не должны включать инные символы кроме цифр и букв (русские и англ)!"),
   authMiddleware,
   postController.createPost
 );
@@ -66,7 +67,15 @@ router.post(
   authMiddleware,
   commentController.removeComment
 )
-
+router.get(
+  "/getposts",
+  postController.getPosts
+)
+router.get(
+  "/getpost",
+  postController.getPostById
+)
 router.post("/getpostcomments", commentController.getAllByPostId);
+
 
 module.exports = router;

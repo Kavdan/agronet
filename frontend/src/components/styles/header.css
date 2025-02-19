@@ -1,0 +1,128 @@
+@import url('colors.css');
+
+.header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: calc(100% - 20px);
+    height: 50px;
+    padding: 10px;
+    border-bottom: 1px solid var(--text-dark);
+    background: var(--primary-green);
+}
+
+.header .logo {
+    cursor: pointer;
+}
+
+.header-profile {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    height: 40px;
+    color: var(--background-beige);
+}
+
+.header-profile-img img{
+    width: 40px;
+    height: 40px;
+    border-radius: 100%;
+    border: 1px solid var(--primary-green);
+    cursor: pointer;
+}
+
+.header-profile-img img:hover {
+    border: 1px solid var(--accent-orange);
+}
+
+.header-profile-name {
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.header-profile-menu {
+    position: absolute;
+    min-width: 200px;
+    right: 10px;
+    top: 80px;
+    background: var(--primary-green);
+    padding: 5px;
+}
+
+.header-profile-menu-item {
+    padding: 5px;
+    color: var(--background-beige);
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.header-profile-menu-item:hover {
+    background: var(--text-dark);
+}
+
+.header-profile-menu-button {
+    margin-top: 10px;
+    font-size: 16px;
+}
+
+.header-profile-menu-button button {
+    width: 100%;
+    cursor: pointer;
+    background: var(--secondary-brown);
+    padding: 5px;
+}
+
+.header-profile-menu-button button:hover {
+    background: var(--accent-orange);
+}
+
+.header-search {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 20px;
+    padding: 5px;
+    margin-left: auto;
+    width: 40%;
+    background: var(--background-beige);
+}
+
+.header-search:hover {
+    border: 1px solid var(--accent-orange);
+}
+
+.header-search input {
+    border-radius: 20px;
+    padding: 3px;
+    width: 100%;
+    border: none;
+    outline: none;
+    margin-left: 5px;
+    background: transparent;
+}
+
+.header-search img {
+    cursor: pointer;
+}
+
+.header-auth-buttons{
+    margin-left: auto;
+    display: flex;
+    gap: 10px;
+}
+
+.header-auth-buttons button {
+    padding: 0px;
+    font-size: 14px;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid #cccccc00;
+    padding: 5px;
+}
+
+.header-auth-buttons button:hover {
+    border-bottom: 2px solid var(--accent-orange);
+    background: var(--accent-orange);
+}

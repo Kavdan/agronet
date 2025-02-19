@@ -1,0 +1,37 @@
+:root {
+  /* Шрифты */
+  --font-headers: "Merriweather", serif;
+  --font-headers-weight: 700;
+
+  --font-primary: "Open Sans", sans-serif;
+  --font-primary-weight: 400;
+
+  --font-emphasis: "Montserrat", sans-serif;
+  --font-emphasis-weight: 500;
+
+  /* Размеры шрифтов */
+  --font-size-xxl: 48px; /* Для главного заголовка */
+  --font-size-xl: 36px; /* Для подзаголовков */
+  --font-size-lg: 24px; /* Для заголовков разделов */
+  --font-size-md: 18px; /* Основной текст */
+  --font-size-sm: 16px; /* Мелкий текст, подписи */
+  --font-size-xs: 14px; /* Очень мелкий текст, например, в футере */
+
+  /* Межстрочные интервалы (line-height) */
+  --line-height-headers: 1.2; /* Для заголовков */
+  --line-height-primary: 1.6; /* Для основного текста */
+  --line-height-emphasis: 1.4; /* Для акцентного текста */
+
+  /* Отступы */
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+
+  /* Цвета текста (добавьте свои цвета) */
+  --text-color-primary: #596235; /* Основной цвет текста */
+  --text-color-secondary: #a15c38; /* Вторичный цвет текста */
+  --text-color-light: #f7f1f0; /* Светлый текст для тёмного фона */
+  --text-color-accent: #da6846; /* Акцентный цвет текста */
+}

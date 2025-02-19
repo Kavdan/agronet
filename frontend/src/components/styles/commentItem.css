@@ -1,0 +1,116 @@
+.comment {
+    margin-top: 10px;
+}
+
+.comment .comment_user{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 12px;
+}
+
+.comment .comment_user .avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--primary-green);
+}
+
+.comment .comment_content {
+    padding-left: 10px;
+    border-left: 1px solid var(--primary-green);
+    margin-bottom: -10px;
+}
+
+.comment .comment_buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.comment .comment_buttons button {
+    padding: 5px 5px 5px 0px;
+    border: none;
+    background: none;
+    color: var(--primary-green);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.comment .comment_buttons button:hover {
+    color: var(--text-dark);
+}
+
+.comment .comment_reply {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid black;
+    border-radius: 5px;
+    padding: 10px;
+    min-height: 100px;
+    transition: all 0.6s ease;
+    margin-top: 10px;
+}
+
+.comment .comment_reply[hidden] {
+    display: none;
+}
+
+.comment .comment_reply textarea{
+    background: var(--background-beige);
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    height: auto;
+    resize: none;
+}
+
+.comment .comment_reply button {
+    padding: 5px;
+    max-width: 100px;
+    font-size: 12px;
+    margin-left: auto;
+    margin-top: auto;
+    cursor: pointer;
+}
+
+.comment .comment_reply button:hover {
+    background: var(--secondary-brown);
+}
+
+.comment .replies {
+    padding-left: 20px;
+    border-left: 1px solid var(--primary-green);
+}
+
+.comment_content_update{
+    display: flex;
+    flex-direction: column;
+}
+
+.comment_content_update textarea {
+    background: var(--background-beige);
+    border: none;
+    outline: none;
+    border-radius: 5px;
+    height: auto;
+    resize: none;
+}
+
+.comment_content_update button {
+    padding: 5px;
+    max-width: 100px;
+    font-size: 12px;
+    margin-left: auto;
+    margin-top: auto;
+    cursor: pointer;
+}
+
+.comment_content_update button:hover {
+    background: var(--secondary-brown);
+}
+
+.comment .error {
+    color: red;
+    font-size: 12px;
+}

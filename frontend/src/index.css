@@ -1,0 +1,108 @@
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
+:root {
+  /* Шрифты */
+  --font-headers: "Merriweather", serif;
+  --font-headers-weight: 700;
+
+  --font-primary: "Open Sans", sans-serif;
+  --font-primary-weight: 400;
+
+  --font-emphasis: "Montserrat", sans-serif;
+  --font-emphasis-weight: 500;
+
+  /* Размеры шрифтов */
+  --font-size-xxl: 48px; /* Для главного заголовка */
+  --font-size-xl: 36px; /* Для подзаголовков */
+  --font-size-lg: 24px; /* Для заголовков разделов */
+  --font-size-md: 18px; /* Основной текст */
+  --font-size-sm: 16px; /* Мелкий текст, подписи */
+  --font-size-xs: 14px; /* Очень мелкий текст, например, в футере */
+
+  /* Межстрочные интервалы (line-height) */
+  --line-height-headers: 1.2; /* Для заголовков */
+  --line-height-primary: 1.6; /* Для основного текста */
+  --line-height-emphasis: 1.4; /* Для акцентного текста */
+
+  /* Отступы */
+  --spacing-xs: 8px;
+  --spacing-sm: 16px;
+  --spacing-md: 24px;
+  --spacing-lg: 32px;
+  --spacing-xl: 48px;
+
+  /* Цвета текста (добавьте свои цвета) */
+  --text-color-primary: #596235; /* Основной цвет текста */
+  --text-color-secondary: #a15c38; /* Вторичный цвет текста */
+  --text-color-light: #f7f1f0; /* Светлый текст для тёмного фона */
+  --text-color-accent: #da6846; /* Акцентный цвет текста */
+}
+
+@media (max-width: 768px) {
+  :root {
+    --font-size-xxl: 36px;
+    --font-size-xl: 28px;
+    --font-size-lg: 20px;
+    --font-size-md: 16px;
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  background: var(--text-color-light);
+
+  font-family: var(--font-primary);
+  font-weight: var(--font-primary-weight);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-primary);
+  color: var(--text-color-primary);
+}
+
+h1 {
+  font-family: var(--font-headers);
+  font-weight: var(--font-headers-weight);
+  font-size: var(--font-size-xxl);
+  line-height: var(--line-height-headers);
+  color: var(--text-color-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+h2 {
+  font-family: var(--font-headers);
+  font-weight: var(--font-headers-weight);
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-headers);
+  color: var(--text-color-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+button {
+  font-family: var(--font-emphasis);
+  font-weight: var(--font-emphasis-weight);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-emphasis);
+  color: var(--text-color-light);
+  background-color: var(--text-color-accent);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: none;
+  border-radius: 4px;
+}
+
+blockquote {
+  font-family: var(--font-emphasis);
+  font-weight: var(--font-emphasis-weight);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-emphasis);
+  color: var(--text-color-secondary);
+  margin: var(--spacing-lg) 0;
+  padding-left: var(--spacing-md);
+  border-left: 4px solid var(--text-color-accent);
+}
+
+
+

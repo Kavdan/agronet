@@ -33,10 +33,10 @@ class TokenService {
                 transaction
             });
 
-            if(!transaction) transaction.commit();
+            if(!transaction) await transaction.commit();
             return token;
         } catch(e) {
-            if(!transaction) transaction.rollback();
+            if(!transaction) await transaction.rollback();
             throw e;
         }
     }

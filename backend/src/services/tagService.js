@@ -25,6 +25,20 @@ class TagService {
       }
   }
 
+  async getTags(post_id, all) {
+    const postTags = await postTagModel.findAll({
+      where: {post_id},
+      include: {
+        model: tagModel,
+        attributes: ['name']
+      },
+      attributes: ['post_id', 'tag_id']
+    });
+
+    const tagNames = postTags.map(tag => tag.tag.name);
+    return tagNames;
+  }
+
 }
 
 module.exports = new TagService();

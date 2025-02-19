@@ -25,6 +25,14 @@ const postModel = db.define(
       type: Sequelize.DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    views: {
+      type: Sequelize.DataTypes.INTEGER,
+      defaultValue: 0
+    }, 
+    comments: {
+      type: Sequelize.DataTypes.INTEGER,
+      defaultValue: 0
+    }
   },
   {
     timestamps: true,

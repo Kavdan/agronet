@@ -1,0 +1,36 @@
+.signin {
+    display: flex;
+    flex-direction: column;
+}
+
+.signin input {
+    padding: 10px;
+    border-radius: 10px;
+    outline: none;
+    border: 1px solid #615858;
+    box-sizing: border-box;
+}
+
+.signin input:focus {
+    border-color: var(--primary-green);
+}
+
+.signin span {
+    font-size: 12px;
+    padding: 5px;
+    color: rgb(248, 59, 59);
+}
+
+.signin h2 {
+    margin: 0;
+    margin-bottom: 10px;
+}
+
+.signin button {
+    background: var(--secondary-brown);
+    cursor: pointer;
+}
+
+.signin button:hover {
+    background: var(--accent-orange);
+}

@@ -6,7 +6,6 @@ const mailService = require("./mailService");
 const tokenService = require("./tokenService");
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
-const { where } = require("sequelize");
 const ApiError = require("../exceptions/api-error");
 
 class UserService {
@@ -32,7 +31,7 @@ class UserService {
         { id: userId, email, password_hash: hashPassword, username },
         { transaction }
       );
-      await emailVerificationModel.create(
+      const emailStatus = await emailVerificationModel.create(
         { user_id: userId, activation_link: activationLink },
         { transaction }
       );
@@ -51,7 +50,7 @@ class UserService {
       );
 
       transaction.commit();
-      return { ...tokens, user: userDto };
+      return { ...tokens, user: { ...userDto, isActivated: emailStatus.status}};
     } catch (e) {
       transaction.rollback();
       throw e;
@@ -64,6 +63,7 @@ class UserService {
     try {
       const user = await userModel.findOne({
         where: { email },
+        include: {model: emailVerificationModel, as: "email_verifications"}, 
         transaction,
       });
       if (!user) {
@@ -80,16 +80,18 @@ class UserService {
       const userDto = new UserDto(user);
       const tokens = tokenService.generateTokens({ ...userDto });
 
+      console.log("SignIN >>>>>>>>>>> : ", userDto, tokens.refreshToken);
+
       await tokenService.saveToken(
         userDto.id,
         tokens.refreshToken,
         transaction
       );
 
-      transaction.commit();
-      return { ...tokens, user: userDto };
+      await transaction.commit();
+      return { ...tokens, user: { ...userDto, isActivated: user.email_verifications[0]?.status} };
     } catch (e) {
-      transaction.rollback();
+      await transaction.rollback();
       throw e;
     }
   }
@@ -98,10 +100,10 @@ class UserService {
     const transaction = await db.transaction({ autocommit: false });
     try {
       const token = await tokenService.removeToken(refreshToken, transaction);
-      transaction.commit();
+      await transaction.commit();
       return token;
     } catch (e) {
-      transaction.rollback();
+      await transaction.rollback();
       throw e;
     }
   }
@@ -137,18 +139,21 @@ class UserService {
 
   async refresh(refreshToken) {
     const transaction = await db.transaction({autocommit: false});
+    try{
+      if (!refreshToken) {
+        throw ApiError.UnauthorizedError();
+      }
 
-    try {
-        if (!refreshToken) {
-            throw ApiError.UnauthorizedError();
+      const userData = tokenService.validateRefreshToken(refreshToken);
+      const tokenFromDb = await tokenService.findToken(refreshToken, transaction);
+      
+        if (!userData || !tokenFromDb) { //!tokenFromDb
+          throw ApiError.UnauthorizedError();
         }
-        const userData = tokenService.validateRefreshToken(refreshToken);
-        const tokenFromDb = await tokenService.findToken(refreshToken, transaction);
-        if (!userData || !tokenFromDb) {
-            throw ApiError.UnauthorizedError();
-        }
+
         const user = await userModel.findOne({
             where: {id: userData.id},
+            include: {model: emailVerificationModel, as: "email_verifications"}, 
             transaction
         });
     
@@ -156,6 +161,7 @@ class UserService {
     
         const userDto = new UserDto(user);
         const tokens = tokenService.generateTokens({...userDto});
+
     
         await tokenService.saveToken(
             userDto.id,
@@ -163,12 +169,12 @@ class UserService {
             transaction
         );
 
-        transaction.commit();
-        return {...tokens, user: userDto}
-    } catch (e) {
-        transaction.rollback();
+        await transaction.commit();
+        return {...tokens, user: { ...userDto, isActivated: user.email_verifications[0]?.status}}
+      }catch(e) {
+        await transaction.rollback();
         throw e;
-    }
+      }
   }
 
   async getUsers() {

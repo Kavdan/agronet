@@ -1,0 +1,44 @@
+.create_post {
+    display: flex;
+    max-width: 700px;
+    flex-direction: column;
+    justify-content: center;
+    margin: 0 auto;
+    padding: 10px;
+    gap: 10px;
+    height: calc(100vh - 110px);
+}
+
+.create_post textarea,
+.create_post input {
+    max-height: 300px;
+    background: var(--background-beige);
+    min-width: 100%;
+    box-sizing: border-box;
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 14px;
+    outline: none;
+    border: 1px solid var(--primary-green);
+    scrollbar-color: #c90c0c00 #0d55db00;
+}
+
+.create_post input:focus,
+.create_post textarea:focus {
+    border-color: var(--text-dark);
+}
+
+.create_post button {
+    background: var(--secondary-brown);
+    cursor: pointer;
+}
+
+.create_post button:hover {
+    background: var(--accent-orange);
+}
+
+.create_post span {
+    font-size: 12px;
+    padding: 5px;
+    color: rgb(248, 59, 59);
+}

@@ -17,6 +17,7 @@ class PostController {
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()))
             if(!req.user) return next(ApiError.UnauthorizedError);
 
+
             const user = req.user;
             let {title, content, tags} = req.body;
 
@@ -86,6 +87,27 @@ class PostController {
             const postData = new PostDto(post);
     
             return res.json(postData);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getPosts(req, res, next) {
+        try {
+            const posts = await postService.getAllPosts();
+            return res.json(posts);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getPostById(req, res, next) {
+        try {
+            const { id } = req.query;
+            if(!id) return next(ApiError.BadRequest("Неккоректный id!"));
+
+            const post = await postService.getPostById(id);
+            return res.json(post);
         } catch (e) {
             next(e);
         }

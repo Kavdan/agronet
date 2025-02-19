@@ -9,7 +9,11 @@ const hlp = async (commentId, transaction) => {
     if (!commentId) return [];
 
     const replies = [];
-    const rpls = await commentModel.findAll({ where: { parent_id: commentId }, transaction });
+    const rpls = await commentModel.findAll({ 
+        where: { parent_id: commentId }, 
+        include: {model: userModel},
+        transaction 
+    });
 
     if (!rpls || rpls.length === 0) return [];
 
@@ -116,7 +120,7 @@ class CommentService {
             if(!comment.user) throw ApiError.BadRequest("Такого пользователя не существует!");
             if(!(comment.user.id === userId)) throw ApiError.BadRequest("Комментарий вам не принадлежит!");
 
-            comment.destroy({transaction});
+            await comment.destroy({transaction});
 
             await transaction.commit();
             return {comment}
@@ -129,11 +133,17 @@ class CommentService {
     async getAllByPostId(post_id) {
         const transaction = await db.transaction({autocommit: false});
         try {
-            const comments = await commentModel.findAll({where: {parent_id: null, post_id}});
+            const comments = await commentModel.findAll({
+                where: {parent_id: null, post_id},
+                include: {
+                    model: userModel,
+                    attributes: ['username']
+                }
+            });
             let coms = [];
             for(let comm of comments){
                 const res = await hlp(comm.id, transaction);
-                coms.push({p: comm, replies: res});
+                coms.push({parent: comm, replies: res});
             }
             //console.log(reps);
 
