@@ -7,14 +7,17 @@ import { use, useEffect, useRef, useState } from "react";
 import { Auth } from "./Auth";
 import userStore from "../store/userStore";
 import { observer } from "mobx-react-lite";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import postStore from "../store/postStore";
 
 export const Header = observer(() => {
   const [isOpen, setIsOpen] = useState(false);
   const [isRegistration, setIsRegistration] = useState(false);
   const [isOpenMenu, setIsOpenMenu] = useState(false);
+  const [query, setQuery] = useState('');
 
   const menuRef = useRef(null);
+  const nav = useNavigate();
 
   const openSignInModal = () => {
     setIsOpen(true);
@@ -32,6 +35,7 @@ export const Header = observer(() => {
     }
   };
 
+
   useEffect(() => {
     document.addEventListener('mousedown', 
       (e) => handleClickOutside(e));
@@ -41,12 +45,27 @@ export const Header = observer(() => {
     };
   }, []);
 
+  const handleSearchChange = async () => {
+    postStore.setSearchQuery(query);
+    await postStore.getPosts();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); // Чтобы Enter не переносил строку
+      handleSearchChange();
+    }
+  };
+
   return (
     <div className="header">
-      <img src={Logo} className="logo" alt="" />
+      <img src={Logo} onClick={() => nav('/')} className="logo" alt="" />
 
       <div className="header-search">
-        <input type="text" />
+        <input type="text" 
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => handleKeyDown(e)}/>
         <img src={Lupa} />
       </div>
 
@@ -54,9 +73,7 @@ export const Header = observer(() => {
         <div className="header-profile">
           <div className="header-profile-menu" ref={menuRef}  hidden={!isOpenMenu}>
             <div className="header-profile-menu-item">
-            <Link to={"/ps"}>
                 Уведомления
-              </Link>
             </div>
             <div className="header-profile-menu-item">
               <Link to={"/createPost"}>

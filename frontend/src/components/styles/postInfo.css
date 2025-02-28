@@ -68,3 +68,128 @@
 .post_info_comment button:hover {
     background: var(--secondary-brown);
 }
+
+.post_info_editors {
+    font-size: 12px;
+    display: flex;
+    gap: 10px;
+    color: var(--primary-green);
+    padding: 5px;
+    padding-left: 0px;
+}
+
+.post_info_editors span:hover {
+    color: var(--text-dark);
+    cursor: pointer;
+}
+
+.post_info_update_title,
+.post_info_update_tags {
+    padding: 5px;
+    outline: none;
+    border: 1px solid var(--primary-green);
+    border-radius: 5px;
+}
+
+.post_info_update_title:focus,
+.post_info_update_tags:focus {
+    border-color: var(--accent-orange);
+}
+
+.post_info_update_title{
+    margin-bottom: 10px;
+}
+
+.post_info_update_tags {
+    margin-top: 10px;
+}
+
+.post_info_update_content {
+    resize: none;
+    min-height: 400px;
+    padding: 5px;
+    outline: none;
+    border: 1px solid var(--primary-green);
+    border-radius: 5px;
+}
+
+.post_info_update_content:focus {
+    border-color: var(--accent-orange);
+}
+
+.post_info .remove_perm button {
+    font-size: 12px;
+    margin-right: 10px;
+    background: var(--primary-green);
+    cursor: pointer;
+}
+
+.post_info .remove_perm div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.post_info .remove_perm button:nth-of-type(1):hover {
+    background: red; 
+}
+.post_info .remove_perm button:last-child:hover {
+    background: var(--text-dark);
+}
+
+.post_info .remove_perm h2 {
+    font-size: 25px;
+    text-align: center;
+    color: red;
+}
+
+/* .post_info .images {
+    margin-top: 20px;
+    margin-bottom: -10px;
+}
+
+.post_info .images .image {
+    position: relative;
+    margin-bottom: 10px;
+    margin-right: 10px;
+    width: fit-content;
+    height: fit-content;
+}
+
+.post_info .images .image span {
+    position: absolute;
+    color: white;
+    right: 5px;
+    cursor: pointer;
+}
+
+.post_info .images .image span:hover {
+    color: red;
+} */
+
+.addFile {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.addFile input {
+    display: none;
+}
+
+.addFile button {
+    padding: 5px;
+    font-size: 14px;
+    background: var(--primary-green);
+    cursor: pointer;
+}
+
+.addFile button:hover {
+    background: var(--text-dark);
+}
+
+.addFile span {
+    font-size: 12px;
+    margin-right: 10px;
+}

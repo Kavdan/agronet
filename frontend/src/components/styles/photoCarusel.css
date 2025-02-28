@@ -1,0 +1,86 @@
+.images {
+    position: relative;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    overflow: hidden;
+    min-height: 150px;
+    padding: 0px;
+}
+.images img {
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+    margin: 0px;
+    padding: 0px;
+    border: 1px solid rgba(0, 0, 0, 0);
+    cursor: pointer;
+}
+
+.images img:hover {
+    border: 1px solid var(--accent-orange);
+}
+
+.images .imglist{
+    height: 100%;
+    display: flex;
+    overflow-x: scroll; 
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    gap:10px;
+    padding-left: 50px;
+    padding-right: 50px;
+}
+
+
+.images button {
+    position: absolute;
+    background: transparent;
+    color: gray;
+    height: 100%;
+    font-size: 18px;
+    border-radius: 0px;
+    cursor: pointer;
+}
+
+
+.images button:hover {
+    background: rgba(255, 255, 255, 0.322);
+    color: var(--accent-orange);
+}
+
+.images .left {
+    left: 0px;
+}
+
+.images .right {
+    right: 0px;
+}
+
+.images .image-wrapper button {
+    position:static;
+    height: auto;
+    font-size: 11px;
+    padding: 2px;
+    border-radius: 50%;
+    height: 20px;
+    width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-bottom: 1px;
+    background: rgb(248, 129, 129);
+    color: white;
+    z-index: 1000;
+}
+
+.images .image-wrapper button:hover{
+    background: red;
+    color: white;
+}
+
+.zoomed_photo {
+    max-width: 100%; 
+    max-height: 100vh;
+}

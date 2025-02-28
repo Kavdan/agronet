@@ -1,4 +1,28 @@
 .posts_list {
     max-width: 1000px;
     margin: 0 auto;
+    padding-bottom: 50px;
+}
+
+.posts_list .pagination {
+    display: flex;
+    gap: 5px;
+    font-size: 18px;
+    position: absolute;
+    bottom: 10px;
+    left: calc(100vw / 2 - 20px);
+    background: var(--primary-green);
+    color: var(--background-beige);
+    padding: 5px;
+    border-radius: 10px;
+}
+
+.posts_list .pagination span {
+    user-select: none;
+}
+
+.posts_list .pagination span:first-child:hover,
+.posts_list .pagination span:last-child:hover {
+    color: var(--accent-orange);
+    cursor: pointer;
 }

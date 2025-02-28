@@ -6,6 +6,8 @@ const postController = require('../controllers/postController');
 const authMiddleware = require('../middlewares/auth-middleware');
 const commentModel = require('../models/commentModel');
 const commentController = require('../controllers/commentController');
+const upload = require('../config/multer');
+const photoController = require('../controllers/photoController');
 
 router.post("/signup",
     body('email').isEmail().withMessage("Ведите корректный email!"),
@@ -76,6 +78,18 @@ router.get(
   postController.getPostById
 )
 router.post("/getpostcomments", commentController.getAllByPostId);
+
+router.post("/addphoto", 
+            authMiddleware,
+            upload.single('photo'),
+            photoController.addPhoto);
+router.post("/updatephoto", 
+            authMiddleware,
+            upload.single('photo'),
+            photoController.updatePhoto);
+router.post("/removephoto",
+            authMiddleware,
+            photoController.removePhoto)
 
 
 module.exports = router;

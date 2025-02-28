@@ -1,6 +1,7 @@
 const commentModel = require("./commentModel");
 const emailVerificationModel = require("./emailVerificationModel");
 const LikeModel = require("./likeModels");
+const PhotoModel = require("./photoModel");
 const postModel = require("./postModel");
 const postTagModel = require("./postTagModel");
 const roleModel = require("./roleModel");
@@ -62,6 +63,13 @@ postTagModel.belongsTo(tagModel, { foreignKey: "tag_id" });
 postTagModel.belongsTo(postModel, { foreignKey: "post_id" });
 
 tagModel.hasMany(postTagModel, { foreignKey: "tag_id" });
+
+postModel.hasMany(PhotoModel, {foreignKey: "postId", onDelete: "CASCADE"});
+PhotoModel.belongsTo(postModel, {foreignKey: "postId", onDelete: "CASCADE"});
+
+commentModel.hasMany(PhotoModel, {foreignKey: "commentId", onDelete: "CASCADE"});
+PhotoModel.belongsTo(commentModel, {foreignKey: "commentId", onDelete: "CASCADE"});
+
 
 module.exports = {
   userModel,

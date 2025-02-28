@@ -20,8 +20,8 @@ function App() {
       <Header />
       <div className="content">
         <Routes>
+            <Route path="/" element={<PostsList />}/>
             <Route path="/createPost" element={<CreatePost />}/>
-            <Route path="/ps" element={<PostsList />}/>
             <Route path="/postInfo/:id" element={<PostInfo />} />
         </Routes>
       </div>

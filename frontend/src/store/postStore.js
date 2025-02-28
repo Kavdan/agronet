@@ -1,4 +1,4 @@
-import { makeAutoObservable, toJS } from "mobx";
+import { makeAutoObservable, runInAction, toJS } from "mobx";
 import { PostError } from "../components/errors/postError";
 import { PostService } from "../services/postService";
 
@@ -6,6 +6,11 @@ class PostStore {
     posts = [];
     errors = [];
     post = {};
+    searchQuery = '';
+    currentPage = 1;
+    totalPages = 1;
+    totalPosts = 1;
+    limit = 3;
 
     constructor() {
         makeAutoObservable(this);
@@ -23,10 +28,26 @@ class PostStore {
         this.errors = errors;
     }
 
-    async createPost(title, content, tags) {
+    setSearchQuery(query) {
+        this.searchQuery = query;
+    }
+
+    setCurrentPage(page = 1){
+        this.currentPage = page;
+    }
+
+    setTotalPages(pages = 1){
+        this.totalPages = pages;
+    }
+
+    setTotalPosts(postsCount){
+        this.totalPosts = postsCount;
+    }
+
+    async createPost(title, content, tags, files) {
         try{
             this.setErrors([]);
-            const res = await PostService.createPost(title, content, tags); 
+            const res = await PostService.createPost(title, content, tags, files); 
             this.setPosts(res.data);
             return res;
         }catch(e) { 
@@ -38,10 +59,20 @@ class PostStore {
     async getPosts() {
         try {
             this.setErrors([]);
-            const res = await PostService.getPosts();
+            const res = await PostService.getPosts(
+                this.searchQuery,
+                this.currentPage,
+                this.limit
+            );
             console.log(res.data);
-            this.setPosts(res.data);
+            runInAction(() => {
+                this.setPosts(res.data.posts);
+                this.setCurrentPage(+(res.data.currentPage));
+                this.setTotalPosts(+(res.data.totalPosts));
+                this.setTotalPages(+(res.data.totalPages));
+            })
         } catch (e) {
+            console.log(e);
             this.setErrors(new PostError(e.response?.data?.message, 
                 e.response?.data?.errors));
         }
@@ -55,6 +86,24 @@ class PostStore {
             this.setErrors(new PostError(e.response?.data?.message, 
                 e.response?.data?.errors));
         }
+    }
+
+    async updatePost(postId, title, content, tags){
+        try {
+            this.setErrors([]);
+            const res = await PostService.updatePost(postId, title, content, tags);
+            this.setPost(res.data);
+        } catch (error) {
+            this.setErrors(new PostError(e.response?.data?.message, 
+                e.response?.data?.errors));
+        }
+    }
+
+    get filteredPosts() {
+        if (!Array.isArray(this.posts)) {
+            return [];
+        }
+        return this.posts?.filter(post => true);
     }
 }
 

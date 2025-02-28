@@ -94,7 +94,12 @@ class PostController {
 
     async getPosts(req, res, next) {
         try {
-            const posts = await postService.getAllPosts();
+            const { query, page, limit } = req.query;
+             const posts = await postService.getAllPosts(
+                query || '',
+                page || 1,
+                limit || 2
+            );
             return res.json(posts);
         } catch (e) {
             next(e);
