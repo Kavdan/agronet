@@ -34,6 +34,14 @@ const postModel = db.define(
     comments: {
       type: Sequelize.DataTypes.INTEGER,
       defaultValue: 0
+    },
+    latitude: {
+      type: Sequelize.DataTypes.FLOAT,
+      allowNull: true
+    },
+    longitude: {
+      type: Sequelize.DataTypes.FLOAT,
+      allowNull: true
     }
   },
   {
@@ -41,14 +49,21 @@ const postModel = db.define(
   }
 );
 
-postModel.searchPosts = async function (query, limit, offset) {
+postModel.searchPosts = async function (query, limit, offset, user_id) {
+  const whereCondition = {
+    [Sequelize.Op.or]: [
+      { title: { [Sequelize.Op.iLike]: `%${query}%` } },
+      { content: { [Sequelize.Op.iLike]: `%${query}%` } },
+    ],
+  };
+
+  if (user_id) {
+    whereCondition.user_id = user_id;
+  }
+
+
   const { count, rows: posts } = await postModel.findAndCountAll({
-    where: {
-      [Sequelize.Op.or]: [
-        { title: { [Sequelize.Op.iLike]: `%${query}%` } }, // Поиск по title
-        { content: { [Sequelize.Op.iLike]: `%${query}%` } }, // Поиск по content
-      ],
-    },
+    where: whereCondition,
     include: [{
       model: tagModel,
       through: { attributes: [] }, // Исключаем атрибуты из таблицы связей

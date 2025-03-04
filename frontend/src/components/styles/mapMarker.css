@@ -1,0 +1,46 @@
+.maplist {
+    position:absolute;
+    top: 100px;
+    z-index: 1000;
+    right: 20px;
+    overflow-y: scroll;
+    background: white;
+    min-width: 200px;
+    max-height: 150px;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.mapShowPoly {
+    position:absolute;
+    top: 80px;
+    z-index: 1000;
+    right: 15px;
+    background: var(--primary-green);
+    color: white;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 10px;
+    text-transform: lowercase;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+.mapShowPoly:hover {
+    background: var(--text-dark);
+}
+
+.maplist .maplist_item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.maplist .maplist_item_color {
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+}

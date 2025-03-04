@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import Modal from "./Modal";
 import "./styles/photoCarusel.css"
+import { toJS } from "mobx";
 
 export const PhotoCarusel = ({ photos, onRemovePhoto }) => {
   const [showPhoto, setShowPhoto] = useState(false);
@@ -47,7 +48,7 @@ export const PhotoCarusel = ({ photos, onRemovePhoto }) => {
           <div className="imglist" ref={containerRef}>
             {photos?.map((photo, i) => {
               let url;
-              if (typeof photo === 'string' || photo instanceof String)
+              if(!photo.data)
                 url = URL.createObjectURL(photo);
               return (
                 <div className="image-wrapper" key={i}>

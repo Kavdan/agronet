@@ -45,12 +45,14 @@ postModel.belongsToMany(tagModel, {
   through: postTagModel,
   foreignKey: "post_id",
   otherKey: "tag_id",
+  onDelete: "CASCADE"
 });
 
 tagModel.belongsToMany(postModel, {
   through: postTagModel,
   foreignKey: "tag_id",
   otherKey: "post_id",
+  onDelete: "CASCADE"
 });
 
 postModel.hasMany(LikeModel, 

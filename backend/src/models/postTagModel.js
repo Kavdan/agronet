@@ -6,7 +6,8 @@ const postTagModel = db.define(
     {
       post_id: {
         type: Sequelize.DataTypes.INTEGER,
-        primaryKey: true, // Если нет отдельного id, можно сделать составной ключ
+        primaryKey: true,
+        onDelete: "CASCADE", 
       },
       tag_id: {
         type: Sequelize.DataTypes.INTEGER,

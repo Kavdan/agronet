@@ -1,3 +1,4 @@
+const { where } = require("sequelize");
 const db = require("../database");
 const CommentDto = require("../dtos/commentDto");
 const ApiError = require("../exceptions/api-error");
@@ -5,9 +6,9 @@ const commentModel = require("../models/commentModel");
 const postModel = require("../models/postModel");
 const userModel = require("../models/userModel");
 
-const hlp = async (commentId, transaction) => {
+const hlp = async (commentId, transaction, count) => {
     if (!commentId) return [];
-
+    count.value++;
     const replies = [];
     const rpls = await commentModel.findAll({ 
         where: { parent_id: commentId }, 
@@ -18,7 +19,7 @@ const hlp = async (commentId, transaction) => {
     if (!rpls || rpls.length === 0) return [];
 
     for (let reply of rpls) {
-        const nestedReplies = await hlp(reply.id, transaction); // Получаем вложенные комментарии
+        const nestedReplies = await hlp(reply.id, transaction, count); // Получаем вложенные комментарии
         replies.push({ ...reply.toJSON(), replies: nestedReplies }); // Добавляем replies в объект
     }
 
@@ -57,6 +58,9 @@ class CommentService {
                 }, 
                 {transaction}
             );
+
+            post.comments = post.comments < 0 ? 1 : post.comments + 1;
+            await post.save();
             
             const commentData = new CommentDto(comment);
 
@@ -120,6 +124,19 @@ class CommentService {
             if(!comment.user) throw ApiError.BadRequest("Такого пользователя не существует!");
             if(!(comment.user.id === userId)) throw ApiError.BadRequest("Комментарий вам не принадлежит!");
 
+            if(comment.post_id){
+                const post = await postModel.findOne({
+                    where: {
+                        id: comment.post_id
+                    }
+                });
+
+                if(post) {
+                    post.comments = post.comments < 0 ? 0 : post.comments - 1;
+                    await post.save();
+                }
+            }
+
             await comment.destroy({transaction});
 
             await transaction.commit();
@@ -141,16 +158,16 @@ class CommentService {
                 }
             });
             let coms = [];
+            let count = {value: 0};
             for(let comm of comments){
-                const res = await hlp(comm.id, transaction);
+                const res = await hlp(comm.id, transaction, count);
                 coms.push({parent: comm, replies: res});
             }
-            //console.log(reps);
 
 
 
             await transaction.commit();
-            return coms;
+            return {coms, count: count.value};
         } catch (e) {
             await transaction.rollback();
             throw e;

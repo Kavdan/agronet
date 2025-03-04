@@ -3,28 +3,26 @@ import { useEffect } from "react";
 import postStore from "../store/postStore";
 import { PostItem } from "./PostItem";
 import "./styles/postsList.css"
-import { useNavigate } from "react-router-dom";
 
-export const PostsList = observer(() => {
-    const nav = useNavigate();
+export const MyPostsList = observer(() => {
 
     useEffect(() => {
         postStore.setLimit(10);
-        postStore.getPosts();
+        postStore.getMyPosts();
     }, [postStore.currentPage]);
 
     const handleNextPage = () => {
         if(postStore.currentPage >= postStore.totalPages) 
             return;
         postStore.setCurrentPage(postStore.currentPage + 1);
-        postStore.getPosts();
+        postStore.getMyPosts();
     }
 
     const handlePrevPage = () => {
         if(postStore.currentPage === 1) 
             return;
         postStore.setCurrentPage(postStore.currentPage - 1);
-        postStore.getPosts();
+        postStore.getMyPosts();
     }
 
     return (
@@ -32,17 +30,6 @@ export const PostsList = observer(() => {
             {/* {postStore.posts && postStore.posts.map((post) => {
                 return <PostItem key={post.id} {...post}/>
             })} */}
-            <div className="filters">
-                <div className="sort">
-                    <span>Сортировать: </span>
-                    <select className="sort">
-                        <option>По дате</option>
-                        <option>По лайкам</option>
-                        <option>По кол-ву комментариев</option>
-                    </select>
-                </div>
-                <button onClick={() => nav("/postsMap")}>Открыть карту</button>
-            </div>
             {postStore.filteredPosts.map((post) => {
                 return <PostItem key={post.id} {...post}/>
             })}

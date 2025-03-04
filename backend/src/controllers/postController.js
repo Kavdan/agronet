@@ -19,7 +19,7 @@ class PostController {
 
 
             const user = req.user;
-            let {title, content, tags} = req.body;
+            let {title, content, tags, coordinates} = req.body;
 
             if (tags && tags.length > 0) {
                 tags = tags.split(',').map(tag => tag.trim()); 
@@ -34,7 +34,7 @@ class PostController {
             }
 
             
-            const post = await postService.createPost(user.id, title, content, tags);
+            const post = await postService.createPost(user.id, title, content, tags, coordinates);
 
             return res.json({...(new PostDto(post)), ms: "Пост создан!"});
         } catch (e) {
@@ -113,6 +113,26 @@ class PostController {
 
             const post = await postService.getPostById(id);
             return res.json(post);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getMyPosts(req, res, next) {
+        try {
+            const { query, page, limit } = req.query;
+            const user = req.user;
+            if(!user) next(ApiError.UnauthorizedError());
+
+             const posts = await postService.getMyPosts(
+                query || '',
+                page || 1,
+                limit || 2,
+                user.id
+            );
+
+            console.log(">>>>>>>>>>>>>>>", posts);
+            return res.json(posts);
         } catch (e) {
             next(e);
         }

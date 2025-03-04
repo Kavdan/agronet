@@ -11,11 +11,44 @@ export const CreatePost = observer(() => {
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [files, setFiles] = useState([]);
+  const [coordinates, setCoordinates] = useState({
+    latitude: null,
+    longitude: null,
+    error: null,
+  });
   const nav = useNavigate();
 
+  const getCoordinates = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCoordinates({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            error: null,
+          });
+        },
+        (error) => {
+          setCoordinates({
+            latitude: null,
+            longitude: null,
+            error: error.message,
+          });
+        }
+      );
+    } else {
+      setCoordinates({
+        latitude: null,
+        longitude: null,
+        error: 'Geolocation is not supported by this browser.',
+      });
+    }
+  }
 
   const postHandle = async () => {
-    const res = await postStore.createPost(title, content, tags, files);
+    const res = await postStore.createPost(title, content, tags, files,
+      coordinates
+    );
 
     if (res && res.status === 200) nav("/");
   };
@@ -23,7 +56,6 @@ export const CreatePost = observer(() => {
   const removePhoto = (index) => {
     setFiles(files.filter((file, i) => i !== index));
   }
-
 
   return (
     <div className="create_post">
@@ -62,8 +94,11 @@ export const CreatePost = observer(() => {
       <input
         type="file"
         accept="image/*"
-        onChange={(e) => setFiles([...files, ...e.target.files])}
+        onChange={(e) => setFiles([...files, e.target.files[0]])}
       />
+
+      <button className="coordinates"
+              onClick={() => getCoordinates()}>Добавить координаты</button>
 
       <button onClick={() => postHandle()}>Создать пост</button>
     </div>

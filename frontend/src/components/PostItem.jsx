@@ -69,7 +69,7 @@ export const PostItem = observer(
 
           <div className="comments">
             <span>💬</span>
-            <span>0</span>
+            <span>{comments}</span>
           </div>
         </div>
         <div className="post_item_tags">

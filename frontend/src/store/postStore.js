@@ -44,13 +44,18 @@ class PostStore {
         this.totalPosts = postsCount;
     }
 
-    async createPost(title, content, tags, files) {
+    setLimit(limit){
+        this.limit = limit;
+    }
+
+    async createPost(title, content, tags, files, coordinates) {
         try{
             this.setErrors([]);
-            const res = await PostService.createPost(title, content, tags, files); 
+            const res = await PostService.createPost(title, content, tags, files, coordinates); 
             this.setPosts(res.data);
             return res;
         }catch(e) { 
+            console.log(e);
             this.setErrors(new PostError(e.response?.data?.message, 
                 e.response?.data?.errors));
         }
@@ -64,7 +69,28 @@ class PostStore {
                 this.currentPage,
                 this.limit
             );
-            console.log(res.data);
+
+            runInAction(() => {
+                this.setPosts(res.data.posts);
+                this.setCurrentPage(+(res.data.currentPage));
+                this.setTotalPosts(+(res.data.totalPosts));
+                this.setTotalPages(+(res.data.totalPages));
+            })
+        } catch (e) {
+            console.log(e);
+            this.setErrors(new PostError(e.response?.data?.message, 
+                e.response?.data?.errors));
+        }
+    }
+
+    async getMyPosts() {
+        try {
+            this.setErrors([]);
+            const res = await PostService.getMyPosts(
+                this.searchQuery,
+                this.currentPage,
+                this.limit
+            );
             runInAction(() => {
                 this.setPosts(res.data.posts);
                 this.setCurrentPage(+(res.data.currentPage));

@@ -35,6 +35,12 @@ export const Header = observer(() => {
     }
   };
 
+  const handleMyPosts = async () => {
+    postStore.setCurrentPage(1);
+    await postStore.getMyPosts();
+    nav("/myposts");
+  }
+
 
   useEffect(() => {
     document.addEventListener('mousedown', 
@@ -57,9 +63,15 @@ export const Header = observer(() => {
     }
   };
 
+  const handleGetPosts = async() => {
+    postStore.setCurrentPage(1);
+    await postStore.getPosts();
+    nav("/");
+  }
+
   return (
     <div className="header">
-      <img src={Logo} onClick={() => nav('/')} className="logo" alt="" />
+      <img src={Logo} onClick={() => handleGetPosts()} className="logo" alt="" />
 
       <div className="header-search">
         <input type="text" 
@@ -80,7 +92,8 @@ export const Header = observer(() => {
                 Создать пост
               </Link>
             </div>
-            <div className="header-profile-menu-item">Мои посты</div>
+            <div className="header-profile-menu-item"
+                 onClick={() => handleMyPosts()}>Мои посты</div>
             <div className="header-profile-menu-button">
               <button onClick={() => userStore.signOut()}>Выйти</button>
             </div>

@@ -2,8 +2,8 @@ import $api from "../http";
 import { PhotoService } from "./photoService";
 
 export class PostService {
-    static async createPost(title, content, tags, files) {
-        const post = await $api.post("/createpost", {title, content, tags, files});
+    static async createPost(title, content, tags, files, coordinates) {
+        const post = await $api.post("/createpost", {title, content, tags, files, coordinates});
         
         if(Array.isArray(files) && files.length > 0){
             files.forEach(async (file) => {
@@ -23,6 +23,11 @@ export class PostService {
 
     static async getPosts(query, page, limit) {
         const res = await $api.get("/getposts", {params: {query, page, limit}});
+        return res;
+    }
+
+    static async getMyPosts(query, page, limit) {
+        const res = await $api.get("/getmyposts", {params: {query, page, limit}});
         return res;
     }
 

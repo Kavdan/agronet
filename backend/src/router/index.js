@@ -77,6 +77,11 @@ router.get(
   "/getpost",
   postController.getPostById
 )
+router.get(
+  "/getmyposts",
+  authMiddleware,
+  postController.getMyPosts
+)
 router.post("/getpostcomments", commentController.getAllByPostId);
 
 router.post("/addphoto", 

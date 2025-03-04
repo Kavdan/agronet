@@ -13,7 +13,7 @@ const path = require("path");
 const photoService = require("./photoService");
 
 class PostService {
-  async createPost(userId, title, content, tags = []) {
+  async createPost(userId, title, content, tags = [], coordinates) {
     const transaction = await db.transaction({ autocommit: false });
 
     try {
@@ -24,7 +24,9 @@ class PostService {
       if (!user) throw ApiError.UnauthorizedError();
 
       const post = await postModel.create(
-        { user_id: userId, title, content },
+        { user_id: userId, title, content, 
+          longitude: coordinates.longitude || null, 
+          latitude: coordinates.latitude || null },
         { transaction }
       );
       const postData = new PostDto(post);
@@ -164,8 +166,53 @@ class PostService {
 
     const comments = await commentService.getAllByPostId(id);
 
-    return {...post.dataValues, tags, comments, photos: photoBase64};
+    return {...post.dataValues, 
+      tags, 
+      comments: comments.coms,
+      commentsCount: comments.count, 
+      photos: photoBase64};
   }
+
+  async getMyPosts(query = '', page = 1, limit = 2, user_id) {
+    try {
+      const offset = (page - 1) * limit;
+      const {count, posts} = await postModel.searchPosts(query, limit, offset, user_id);
+  
+      const postsWithTagsAndPhotos = await Promise.all(
+        posts.map(async (post) => {
+            const tags = post.tags.map((tag) => tag.name); // Массив названий тегов
+
+            const photos = await Promise.all(
+                post.photos.map(async (photo) => {
+                    const filePath = path.join(__dirname, "..", photo.path); // Полный путь к файлу
+                    const fileData = fs.readFileSync(filePath); // Читаем файл
+                    const base64 = fileData.toString("base64"); // Преобразуем в base64
+                    return {
+                        filename: photo.filename,
+                        data: `data:image/jpeg;base64,${base64}`, // Формируем Data URL
+                    };
+                })
+            );
+
+            return {
+                ...post.toJSON(),
+                tags,
+                photos,
+            };
+        })
+    );
+  
+      return {
+        posts: postsWithTagsAndPhotos,
+        totalPosts: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+  
 }
 
 module.exports = new PostService();

@@ -70,7 +70,6 @@ export const PostInfo = observer(() => {
     nav("/");
   };
 
-  console.log(toJS(postStore.post.photos));
 
   const handleRemovePhoto = async (i) => {
     await PhotoService.removePhoto(i);
@@ -90,6 +89,10 @@ export const PostInfo = observer(() => {
     setFile('');
   }
 
+  const showOnMap = () => {
+    nav(`/postMap/${postStore.post.longitude}/${postStore.post.latitude}`)
+  }
+
   return (
     <div className="post_info">
       {showPhoto && (
@@ -99,7 +102,7 @@ export const PostInfo = observer(() => {
               postStore.post?.photos[currPhoto]
                 ? postStore.post.photos[currPhoto]?.data
                 : "#"
-            }
+              }
             alt=""
             style={{ maxWidth: 800 }}
           />
@@ -153,7 +156,7 @@ export const PostInfo = observer(() => {
           <PhotoCarusel photos={postStore?.post?.photos} />
         </>
       )}
-
+<button onClick={() => showOnMap()}>Показать на карте</button>
       {showUpdate ? (
         <input
           className="post_info_update_tags"

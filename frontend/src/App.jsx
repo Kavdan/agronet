@@ -7,6 +7,8 @@ import { CreatePost } from "./components/CreatePost";
 import { PostItem } from "./components/PostItem";
 import { PostsList } from "./components/PostsList";
 import { PostInfo } from "./components/PostInfo";
+import { MyPostsList } from "./components/MyPostsList";
+import { MapMarker } from "./components/MapMarker";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -21,8 +23,11 @@ function App() {
       <div className="content">
         <Routes>
             <Route path="/" element={<PostsList />}/>
+            <Route path="/myposts" element={<MyPostsList />}/>
             <Route path="/createPost" element={<CreatePost />}/>
             <Route path="/postInfo/:id" element={<PostInfo />} />
+            <Route path="/postsMap" element={<MapMarker />} />
+            <Route path="/postMap/:longitude/:latitude" element={<MapMarker />} />
         </Routes>
       </div>
     </>

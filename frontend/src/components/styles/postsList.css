@@ -26,3 +26,30 @@
     color: var(--accent-orange);
     cursor: pointer;
 }
+
+.posts_list .filters {
+    border-bottom: 1px solid var(--primary-green);
+    border-top: 1px solid var(--primary-green);
+    margin-top: 10px;
+    display: flex;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.posts_list .filters .sort {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.posts_list .filters button {
+    font-size: 12px;
+    background: var(--primary-green);
+    padding: 3px;
+    margin-left: auto;
+    cursor: pointer;
+}
+
+.posts_list .filters button:hover {
+    background-color: var(--text-dark);
+}
