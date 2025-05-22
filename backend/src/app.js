@@ -38,6 +38,16 @@ app.use(errorMiddleware);
 const start = async () => {
     try {
         await db.sync({alter:true});
+        await Promise.all([
+            roleModel.findOrCreate({
+                where: { id: 1 },
+                defaults: { name: 'user' }
+            }),
+            roleModel.findOrCreate({
+                where: { id: 2 },
+                defaults: { name: 'admin' }
+            })
+        ]);
         app.listen(PORT, () => console.log(`Server started on PORT = ${PORT}`))
     } catch (e) {
         console.log(e);
