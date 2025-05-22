@@ -73,6 +73,7 @@ class UserStore {
           localStorage.setItem('token', response.data.accessToken);
           this.setAuth(true);
           this.setUser(response.data.user);
+          this.setErrors([]);
     } catch (e) {
         this.setAuth(false);
         this.setErrors(new AuthError(e.response?.data?.message, e.response?.data?.errors));
@@ -80,7 +81,18 @@ class UserStore {
     } finally {
         this.setLoading(false);
     }
-}
+
+  }
+
+  async updateNotification(id) {
+    try {
+        const response = await UserService.updateNotification(id);
+        this.checkAuth();
+    } catch (e) {
+        this.setErrors(new AuthError(e.response?.data?.message, e.response?.data?.errors));
+        console.log(e);
+    }
+  }
 }
 
 export default new UserStore();

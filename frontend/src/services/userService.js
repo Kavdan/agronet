@@ -17,4 +17,10 @@ export default class UserService {
     const res = await $api.get("/refresh", {withCredentials: true});
     return res;
   }
+
+  static async updateNotification(id) {
+    const res = await $api.post("/updatenotification", 
+      {id});
+    return res;
+  }
 }

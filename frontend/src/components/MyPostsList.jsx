@@ -3,6 +3,8 @@ import { useEffect } from "react";
 import postStore from "../store/postStore";
 import { PostItem } from "./PostItem";
 import "./styles/postsList.css"
+import { toJS } from "mobx";
+import userStore from "../store/userStore";
 
 export const MyPostsList = observer(() => {
 
@@ -10,6 +12,8 @@ export const MyPostsList = observer(() => {
         postStore.setLimit(10);
         postStore.getMyPosts();
     }, [postStore.currentPage]);
+
+    console.log(toJS(userStore.user));
 
     const handleNextPage = () => {
         if(postStore.currentPage >= postStore.totalPages) 

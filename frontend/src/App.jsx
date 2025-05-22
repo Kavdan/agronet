@@ -9,6 +9,7 @@ import { PostsList } from "./components/PostsList";
 import { PostInfo } from "./components/PostInfo";
 import { MyPostsList } from "./components/MyPostsList";
 import { MapMarker } from "./components/MapMarker";
+import NotificationList from "./components/NotificationsList";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -28,6 +29,7 @@ function App() {
             <Route path="/postInfo/:id" element={<PostInfo />} />
             <Route path="/postsMap" element={<MapMarker />} />
             <Route path="/postMap/:longitude/:latitude" element={<MapMarker />} />
+            <Route path="/notifications" element={<NotificationList />} />
         </Routes>
       </div>
     </>

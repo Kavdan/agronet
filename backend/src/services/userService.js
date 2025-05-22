@@ -7,6 +7,7 @@ const tokenService = require("./tokenService");
 const uuid = require("uuid");
 const bcrypt = require("bcrypt");
 const ApiError = require("../exceptions/api-error");
+const notificationModel = require("../models/notificationModel");
 
 class UserService {
   async signup(email, password, username) {
@@ -50,7 +51,12 @@ class UserService {
       );
 
       transaction.commit();
-      return { ...tokens, user: { ...userDto, isActivated: emailStatus.status}};
+      return { ...tokens, user: { ...userDto, isActivated: emailStatus.status,
+
+        notifications: [],
+        notificationCount: 0,
+      },  
+    };
     } catch (e) {
       transaction.rollback();
       throw e;
@@ -88,8 +94,20 @@ class UserService {
         transaction
       );
 
+      const notifications = await notificationModel.findAll({
+        where: { user_id: userDto.id },
+        order: [['createdAt', 'DESC']],
+        transaction,
+      });
+
       await transaction.commit();
-      return { ...tokens, user: { ...userDto, isActivated: user.email_verifications[0]?.status} };
+      return { ...tokens, 
+        user: { ...userDto, isActivated: user.email_verifications[0]?.status,
+          notifications,
+          notificationCount: notifications.length,
+
+        },
+      };
     } catch (e) {
       await transaction.rollback();
       throw e;
@@ -169,8 +187,26 @@ class UserService {
             transaction
         );
 
+        const notifications = await notificationModel.findAll({
+          where: { user_id: userDto.id },
+          order: [["createdAt", "DESC"]],
+          transaction,
+        });
+        console.log(">>>>> " + notifications);
+
+
+    const totalNotifications = notifications.length;
+
         await transaction.commit();
-        return {...tokens, user: { ...userDto, isActivated: user.email_verifications[0]?.status}}
+        return {
+          ...tokens,
+          user: {
+            ...userDto,
+            isActivated: user.email_verifications[0]?.status,
+            notifications,
+            notificationCount: totalNotifications,
+          },
+        };
       }catch(e) {
         await transaction.rollback();
         throw e;
@@ -181,6 +217,15 @@ class UserService {
     const users = await userModel.findAll();
     if(!users) throw ApiError.BadRequest("Ошибка в getusers()")
     return users;
+  }
+
+  async updateNotification(id) {
+    console.log("*********", id, typeof id);
+    const existing = await notificationModel.findOne({ where: { id: Number(id) } });
+console.log("FOUND:", existing);
+    const notification = 
+      await notificationModel.update({is_read: true}, {where: {id}});
+    return notification;
   }
 }
 

@@ -11,6 +11,8 @@ const tagService = require("./tagService");
 const fs = require("fs");
 const path = require("path");
 const photoService = require("./photoService");
+const notificationModel = require("../models/notificationModel");
+const { Sequelize } = require("sequelize");
 
 class PostService {
   async createPost(userId, title, content, tags = [], coordinates) {
@@ -32,6 +34,23 @@ class PostService {
       const postData = new PostDto(post);
 
       await tagService.addTags(post.id, tags, transaction);
+
+    const otherUsers = await userModel.findAll({
+      where: { id: userId },
+      transaction,
+    });
+
+    const notifications = otherUsers.map((user) => ({
+      user_id: user.id,
+      type: 'new_post',
+      message: `${user.username || 'Пользователь'} опубликовал новый пост: "${title}". Ознакомьтесь!`,
+      is_read: false,
+      post_id: post.id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }));
+
+    await notificationModel.bulkCreate(notifications, { transaction });
 
       await transaction.commit();
       return postData;

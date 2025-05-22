@@ -131,7 +131,6 @@ class PostController {
                 user.id
             );
 
-            console.log(">>>>>>>>>>>>>>>", posts);
             return res.json(posts);
         } catch (e) {
             next(e);

@@ -1,0 +1,39 @@
+.notification-container {
+    position: relative;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    padding: 12px 16px;
+    margin: 10px 0;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+  }
+
+  .notification-container:hover {
+    background-color: var(--primary-green);
+    color: white;
+  }
+  
+  .notification-message {
+    display: block;
+  }
+  
+  .notification-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 3px;
+    font-size: 12px;
+    font-weight: bold;
+    width: 5px;
+    height: 5px;
+    text-align: center;
+  }
+  

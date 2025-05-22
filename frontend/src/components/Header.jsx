@@ -69,6 +69,10 @@ export const Header = observer(() => {
     nav("/");
   }
 
+  const navToNotifications = () => {
+    nav("/notifications");
+  }
+
   return (
     <div className="header">
       <img src={Logo} onClick={() => handleGetPosts()} className="logo" alt="" />
@@ -84,8 +88,10 @@ export const Header = observer(() => {
       {userStore.isAuth ? (
         <div className="header-profile">
           <div className="header-profile-menu" ref={menuRef}  hidden={!isOpenMenu}>
-            <div className="header-profile-menu-item">
+            <div className="header-profile-menu-item" 
+            onClick={() => navToNotifications()}>
                 Уведомления
+                <span class="notification-badge">{userStore?.user?.notificationCount || 0}</span>
             </div>
             <div className="header-profile-menu-item">
               <Link to={"/createPost"}>

@@ -1,0 +1,1412 @@
+require('dotenv').config({path: __dirname + '/../.env'});
+const express = require('express');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const router = require('./router/index');
+const errorMiddleware = require('./middlewares/error-middleware');
+const db = require('./database');
+const { roleModel, userModel, refreshTokenModel} = require("./models/associations");
+
+const PORT = process.env.PORT || 5000;
+const app = express();
+
+app.use(express.json());
+app.use(cookieParser());
+
+app.use(cors({
+    origin: "http://localhost:5173",  // Allow only your frontend to access
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization",
+    credentials: true
+}));
+
+app.use('/api', router);
+app.use(errorMiddleware);
+
+const start = async () => {
+    try {
+        await db.sync();
+        app.listen(PORT, () => console.log(`Server started on PORT = ${PORT}`))
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+start()
+const Sequelize = require("sequelize");
+
+const db = new Sequelize(
+  process.env.DB_NAME,
+  process.env.DB_USER,
+  process.env.DB_PASSWORD,
+  {
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    dialect: "postgres",
+  }
+);
+
+module.exports = db;const { validationResult } = require("express-validator");
+const ApiError = require("../exceptions/api-error");
+const commentService = require("../services/commentService");
+
+class CommentController {
+    async createComment(req, res, next){
+        try {
+            const errors = validationResult(req);
+
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()))
+            if(!req.user) return next(ApiError.UnauthorizedError);
+
+            const user = req.user;
+            let {postId, parentId, content} = req.body;
+
+            if(!postId) next(ApiError.BadRequest("Что тут неправильно!"));
+            if(!content) next(ApiError.BadRequest("Комментарий не может быть пустым!"));
+            
+            const comment = await commentService.createComment(postId, user.id, parentId, content);
+
+            return res.json(comment);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async removeComment(req, res, next){
+        try {
+            if(!req.user) return next(ApiError.UnauthorizedError);
+            const user = req.user;
+
+            const {commentId} = req.body;
+
+            if(!commentId) return next(ApiError.BadRequest("Такого комментария не существует!"));
+            
+            const comment = await commentService.removeComment(commentId, user.id);
+
+            return res.json(comment);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async updateComment(req, res, next){
+        try {
+            if(!req.user) return next(ApiError.UnauthorizedError);
+            const user = req.user;
+
+            const {commentId, content} = req.body;
+
+            if(!commentId) return next(ApiError.BadRequest("Такого комментария не существует!"));
+            if(!content) return next(ApiError.BadRequest("Неккоректный комментарий!"));
+            
+            const comment = await commentService.updateComment(commentId, user.id, content);
+
+            return res.json(comment);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getAllByPostId(req, res, next) {
+        try {
+            const {postId} = req.body;
+
+            if(!postId) return next(ApiError.BadRequest("Такого поста не существует!"));
+
+            const comments = await commentService.getAllByPostId(postId);
+            return res.json(comments);
+        } catch (e) {
+            next(e);
+        }
+    }
+}
+
+module.exports = new CommentController();const ApiError = require("../exceptions/api-error");
+const photoService = require("../services/photoService");
+const postService = require("../services/postService");
+
+class PhotoController {
+    async addPhoto(req, res, next) {
+        try {
+            const { description, postId, commentId } = req.body;
+            const file = req.file;
+
+            if(!req.user) return next(ApiError.UnauthorizedError);
+    
+            if (!file) {
+                return next(ApiError.BadRequest("Такого файла нет!"));
+            }
+            
+            const photo = await photoService.addPhoto(description, 
+                req.user.id, 
+                file, 
+                postId, 
+                commentId);
+
+            res.json(photo);
+        } catch (e) {
+            next(e)
+        }
+    }
+
+    async updatePhoto(req, res, next){
+        try {
+            const { id } = req.params;
+            const { description, postId, commentId } = req.body;
+            const file = req.file;
+
+            if(!req.user) return next(ApiError.UnauthorizedError);
+            if(!id || !file)
+                return next(ApiError.BadRequest("Photo update failed!"))
+
+            const photo = await photoService.updatePhoto(id, 
+                description,
+                postId,
+                file,
+                req.user.id,
+                commentId);
+    
+            res.json(photo);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async removePhoto(req, res, next){
+        try {
+            const { id } = req.body;
+            if(!req.user) return next(ApiError.UnauthorizedError);
+
+            const photo = await photoService.removePhoto(id, 
+                req.user.id);
+
+            res.json(photo);
+        } catch (e) {
+            next(e);
+        }
+    }
+}
+
+module.exports = new PhotoController();const { validationResult } = require("express-validator");
+const ApiError = require("../exceptions/api-error");
+const postService = require("../services/postService");
+const PostDto = require("../dtos/postDto");
+
+function isValidTag(tag) {
+    return /^[a-zа-яА-ЯA-Z0-9_]+$/.test(tag);
+}
+
+const MAX_TAG_LEN = 50, MIN_TAG_LEN = 2;
+
+class PostController {
+    async createPost(req, res, next) {
+        try {
+            const errors = validationResult(req);
+
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()))
+            if(!req.user) return next(ApiError.UnauthorizedError);
+
+
+            const user = req.user;
+            let {title, content, tags, coordinates} = req.body;
+
+            if (tags && tags.length > 0) {
+                tags = tags.split(',').map(tag => tag.trim()); 
+            }
+
+            for(const tag of tags) {
+                if(tag.length > 0 && tag.length)
+                if(!isValidTag(tag)) return next(ApiError.BadRequest("Теги невалидны", {tag}));
+                if(tag.length < MIN_TAG_LEN || tag.length >= MAX_TAG_LEN) 
+                    return next(ApiError.BadRequest("Теги не могут быть пустыми и их длина не должна превышать 50символов", 
+                                                    {tag}));
+            }
+
+            
+            const post = await postService.createPost(user.id, title, content, tags, coordinates);
+
+            return res.json({...(new PostDto(post)), ms: "Пост создан!"});
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async updatePost(req, res, next) {
+        try {
+            const errors = validationResult(req);
+
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()))
+            if(!req.user) return next(ApiError.UnauthorizedError);
+
+            const user = req.user;
+            let {title, content, tags, postId} = req.body;
+
+            if(!postId) return next(ApiError.BadRequest("Укажите пост, который нужно обновить!"));
+
+            if (tags && tags.length > 0) {
+                tags = tags.split(',').map(tag => tag.trim()); 
+            }
+
+            for(const tag of tags) {
+                if(tag.length > 0 && tag.length)
+                if(!isValidTag(tag)) return next(ApiError.BadRequest("Теги невалидны", {tag}));
+                if(tag.length < MIN_TAG_LEN || tag.length >= MAX_TAG_LEN) 
+                    return next(ApiError.BadRequest("Теги не могут быть пустыми и их длина не должна превышать 50символов", 
+                                                    {tag}));
+            }
+
+            
+            const post = await postService.updatePost(user.id, postId, title, content, tags);
+
+            return res.json({...(new PostDto(post)), ms: "Пост обновлен!"});
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async removePost(req, res, next) {
+        try {
+            const {postId} = req.body;
+            const user = req.user;
+
+            if(!user || !user.id || !postId) 
+                return next(ApiError.BadRequest("Вы не авторизованны или данного поста не существует!"));
+
+            const post = await postService.removePost(user.id, postId);
+            const postData = new PostDto(post);
+    
+            return res.json(postData);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getPosts(req, res, next) {
+        try {
+            const { query, page, limit } = req.query;
+             const posts = await postService.getAllPosts(
+                query || '',
+                page || 1,
+                limit || 2
+            );
+            return res.json(posts);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getPostById(req, res, next) {
+        try {
+            const { id } = req.query;
+            if(!id) return next(ApiError.BadRequest("Неккоректный id!"));
+
+            const post = await postService.getPostById(id);
+            return res.json(post);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getMyPosts(req, res, next) {
+        try {
+            const { query, page, limit } = req.query;
+            const user = req.user;
+            if(!user) next(ApiError.UnauthorizedError());
+
+             const posts = await postService.getMyPosts(
+                query || '',
+                page || 1,
+                limit || 2,
+                user.id
+            );
+
+            console.log(">>>>>>>>>>>>>>>", posts);
+            return res.json(posts);
+        } catch (e) {
+            next(e);
+        }
+    }
+}
+
+module.exports = new PostController();const userService = require('../services/userService');
+const {validationResult} = require('express-validator');
+const ApiError = require('../exceptions/api-error');
+
+class UserController {
+    async signup(req, res, next) {
+        try {
+            const errors = validationResult(req);
+
+            if (!errors.isEmpty()) {
+                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()))
+            }
+
+            const {email, password, username} = req.body;
+            const userData = await userService.signup(email, password, username);
+            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
+            return res.json(userData);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async signin(req, res, next) {
+        try {
+            const errors = validationResult(req);
+
+            if (!errors.isEmpty()) {
+                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()))
+            }
+
+            const {email, password} = req.body;
+            const userData = await userService.signin(email, password);
+            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
+            return res.json(userData);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async signout(req, res, next) {
+        try {
+            const {refreshToken} = req.cookies;
+
+            if (!refreshToken) {
+                return next(ApiError.BadRequest('Вы не в системе!', errors.array()))
+            }
+
+            const token = await userService.signout(refreshToken);
+            res.clearCookie('refreshToken');
+            return res.json(token);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async activate(req, res, next) {
+        try {
+            const activationLink = req.params.link;
+            const user = await userService.activate(activationLink);
+            return res.send(`<h3> ${user.username} ваш аккаунт был активированн!</h3>
+                             <a href="${process.env.API_URL}"> Нажмите, чтобы перейти на главную страницу сайта</a>`);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async refresh(req, res, next) {
+        try {
+            const {refreshToken} = req.cookies;
+
+            if (!refreshToken) {
+                return next(ApiError.UnauthorizedError())
+            }
+
+            const userData = await userService.refresh(refreshToken);
+            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
+            return res.json(userData);
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getUsers(req, res, next) {
+        try {
+            const users = await userService.getUsers();
+            return res.json(users);
+        } catch (e) {
+            next(e);
+        }
+    }
+}
+
+module.exports = new UserController();const ApiError = require('../exceptions/api-error');
+const tokenService = require('../services/tokenService');
+
+module.exports = function (req, res, next) {
+    try {
+        const authorizationHeader = req.headers.authorization;
+        if (!authorizationHeader) {
+            return next(ApiError.UnauthorizedError());
+        }
+        
+        const accessToken = authorizationHeader.split(' ')[1];
+        if (!accessToken) {
+            return next(ApiError.UnauthorizedError());
+        }
+        
+        const userData = tokenService.validateAccessToken(accessToken);
+        if (!userData) {
+            return next(ApiError.UnauthorizedError());
+        }
+
+        req.user = userData;
+        next();
+    } catch (e) {
+        return next(ApiError.UnauthorizedError());
+    }
+};const ApiError = require('../exceptions/api-error');
+
+module.exports = function (err, req, res, next) {
+    console.log(err);
+    if (err instanceof ApiError) {
+        return res.status(err.status).json({message: err.message, errors: err.errors})
+    }
+    return res.status(500).json({message: 'Непредвиденная ошибка'})
+
+};const { where } = require("sequelize");
+const db = require("../database");
+const CommentDto = require("../dtos/commentDto");
+const ApiError = require("../exceptions/api-error");
+const commentModel = require("../models/commentModel");
+const postModel = require("../models/postModel");
+const userModel = require("../models/userModel");
+
+const hlp = async (commentId, transaction, count) => {
+    if (!commentId) return [];
+    count.value++;
+    const replies = [];
+    const rpls = await commentModel.findAll({ 
+        where: { parent_id: commentId }, 
+        include: {model: userModel},
+        transaction 
+    });
+
+    if (!rpls || rpls.length === 0) return [];
+
+    for (let reply of rpls) {
+        const nestedReplies = await hlp(reply.id, transaction, count); // Получаем вложенные комментарии
+        replies.push({ ...reply.toJSON(), replies: nestedReplies }); // Добавляем replies в объект
+    }
+
+    return replies;
+}
+
+class CommentService {
+    async createComment(post_id, user_id, parent_id, content) {
+        const transaction = await db.transaction({autocommit: false});
+        try {
+            const post = await postModel.findOne({
+                where: {id: post_id}, 
+                include: [{ model: userModel, as: "user" }],
+                transaction
+            });
+            const user = await userModel.findOne({where: {id: user_id}, transaction});
+            let parent = null, parentUser = null;
+            
+            if(!post) throw ApiError.BadRequest("Такого поста не существует!");
+            if(!user) throw ApiError.BadRequest("Такого пользователя не существует!");
+
+            if(parent_id) {
+                parent = await commentModel.findOne({where: {id: parent_id}, transaction});
+                if(!parent) throw ApiError.BadRequest("Такого комментария не существует!");
+                parentUser = await userModel.findOne({where: {id: parent.user_id}, transaction});
+                if(!parentUser) throw ApiError.BadRequest("Такого комментария не существует!");
+            }
+
+
+
+
+            const comment = await commentModel.create(
+                {post_id, user_id, parent_id, 
+                 content: `@${(parentUser && parentUser.username) 
+                            || (post.user && post.user.username)}, ${content}`
+                }, 
+                {transaction}
+            );
+
+            post.comments = post.comments < 0 ? 1 : post.comments + 1;
+            await post.save();
+            
+            const commentData = new CommentDto(comment);
+
+            await transaction.commit();
+            return commentData;
+        } catch (e) {
+            await transaction.rollback();
+            throw e;
+        }
+    }
+
+    async updateComment(commentId, userId, content) {
+        const transaction = await db.transaction({autocommit: false});
+        try {
+            const comment = await commentModel.findOne({
+                where: {id: commentId},
+                include: {model: userModel, as: "user"}, 
+                transaction
+            });
+            
+            if(!comment) throw ApiError.BadRequest("Такого комментария не существует!");
+            if(!comment.user) throw ApiError.BadRequest("Такого пользователя не существует!");
+            if(!(comment.user.id === userId)) throw ApiError.BadRequest("Комментарий вам не принадлежит!");
+
+
+            await commentModel.update(
+                {content}, 
+                {where: {id: commentId}, 
+                returning: true,
+                transaction}
+            );
+
+            const updatedComment = await commentModel.findOne({
+                where: { id: commentId },
+                transaction
+            });
+            
+            const commentData = new CommentDto(updatedComment);
+
+            await transaction.commit();
+            return commentData;
+        } catch (e) {
+            await transaction.rollback();
+            throw e;
+        }
+    }
+
+
+    async removeComment(commentId, userId) {
+        const transaction = await db.transaction({autocommit: false});
+        try {
+            const comment = await commentModel.findOne({
+                where: {id: commentId},
+                include: {model: userModel, as: "user"}, 
+                transaction
+            });
+            //const user = await userModel.findOne({where: {id: userId}, transaction});
+
+
+            if(!comment) throw ApiError.BadRequest("Такого комментария не существует!");
+            if(!comment.user) throw ApiError.BadRequest("Такого пользователя не существует!");
+            if(!(comment.user.id === userId)) throw ApiError.BadRequest("Комментарий вам не принадлежит!");
+
+            if(comment.post_id){
+                const post = await postModel.findOne({
+                    where: {
+                        id: comment.post_id
+                    }
+                });
+
+                if(post) {
+                    post.comments = post.comments < 0 ? 0 : post.comments - 1;
+                    await post.save();
+                }
+            }
+
+            await comment.destroy({transaction});
+
+            await transaction.commit();
+            return {comment}
+        } catch (e) {
+            await transaction.rollback();
+            throw e;
+        }
+    }
+
+    async getAllByPostId(post_id) {
+        const transaction = await db.transaction({autocommit: false});
+        try {
+            const comments = await commentModel.findAll({
+                where: {parent_id: null, post_id},
+                include: {
+                    model: userModel,
+                    attributes: ['username']
+                }
+            });
+            let coms = [];
+            let count = {value: 0};
+            for(let comm of comments){
+                const res = await hlp(comm.id, transaction, count);
+                coms.push({parent: comm, replies: res});
+            }
+
+
+
+            await transaction.commit();
+            return {coms, count: count.value};
+        } catch (e) {
+            await transaction.rollback();
+            throw e;
+        }
+    }
+}
+
+module.exports = new CommentService();const nodemailer = require('nodemailer');
+
+class MailService {
+
+    constructor() {
+        this.transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            secure: false,
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_KEY
+            }
+        })
+    }
+
+    async sendActivationMail(to, link) {
+        await this.transporter.sendMail({
+            from: process.env.SMTP_USER,
+            to,
+            subject: 'Активация аккаунта на ' + process.env.API_URL,
+            text: '',
+            html:
+                `
+                    <div>
+                        <h1>Для активации перейдите по ссылке</h1>
+                        <a href="${link}">${link}</a>
+                    </div>
+                `
+        })
+    }
+}
+
+module.exports = new MailService();const db = require("../database");
+const ApiError = require("../exceptions/api-error");
+const PhotoModel = require("../models/photoModel");
+
+class PhotoService {
+  async addPhoto(description, userId, file, postId, commentId) {
+    const transaction = await db.transaction({ autocommit: false });
+
+    try {
+      const photo = await PhotoModel.create({
+        filename: file.filename,
+        path: file.path,
+        description: description || null,
+        userId: userId,
+        postId: postId || null,
+        commentId: commentId || null,
+      }, {transaction});
+
+      await transaction.commit();
+
+      return photo;
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
+  }
+
+  async updatePhoto(id, description, postId, file, userId, commentId) {
+    const transaction = await db.transaction({autocommit: false});
+    try {
+        const photo = await PhotoModel.findOne({
+            where: {
+                id,
+                userId
+            },
+            transaction
+        });
+
+        if (!photo) {
+            throw ApiError.BadRequest("Photo not found!");
+        }
+
+        if (file) {
+            photo.filename = file.filename;
+            photo.path = file.path;
+        }
+
+        if (description) {
+            photo.description = description;
+        }
+
+        if (postId) {
+            photo.postId = postId;
+        }
+
+        if (commentId) {
+            photo.commentId = commentId;
+        }
+
+        await photo.save();
+        await transaction.commit();
+
+        return photo;
+    } catch (e) {
+        await transaction.rollback();
+        throw e;
+    }
+  }
+
+  async removePhoto(id, userId) {
+    const transaction = await db.transaction({autocommit: false});
+    try {
+        const photo = await PhotoModel.findOne({
+            where: {
+                id,
+                userId
+            },
+            transaction
+        });
+
+        if(!photo)
+            throw ApiError.BadRequest("Photo not found!");
+
+        await photo.destroy({transaction});
+
+        await transaction.commit();
+
+        return photo;
+    } catch (e) {
+        await transaction.rollback();
+        throw e;
+    }
+  }
+
+  async getPhotosById(id) {
+    const photos = await PhotoModel.findAll({where: {postId: id}});
+    return photos;
+  }
+}
+
+module.exports = new PhotoService();
+const db = require("../database");
+const PostDto = require("../dtos/postDto");
+const ApiError = require("../exceptions/api-error");
+const commentModel = require("../models/commentModel");
+const postModel = require("../models/postModel");
+const postTagModel = require("../models/postTagModel");
+const tagModel = require("../models/tagModel");
+const userModel = require("../models/userModel");
+const commentService = require("./commentService");
+const tagService = require("./tagService");
+const fs = require("fs");
+const path = require("path");
+const photoService = require("./photoService");
+
+class PostService {
+  async createPost(userId, title, content, tags = [], coordinates) {
+    const transaction = await db.transaction({ autocommit: false });
+
+    try {
+      const user = await userModel.findOne({
+        where: { id: userId },
+        transaction,
+      });
+      if (!user) throw ApiError.UnauthorizedError();
+
+      const post = await postModel.create(
+        { user_id: userId, title, content, 
+          longitude: coordinates.longitude || null, 
+          latitude: coordinates.latitude || null },
+        { transaction }
+      );
+      const postData = new PostDto(post);
+
+      await tagService.addTags(post.id, tags, transaction);
+
+      await transaction.commit();
+      return postData;
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
+  }
+
+  async updatePost(userId, postId, title, content, tags = []) {
+    const transaction = await db.transaction({ autocommit: false });
+
+    try {
+      const user = await userModel.findOne({where: {id: userId}, transaction});
+      const post = await postModel.findOne({where: {id: postId}, transaction});
+
+      if(!post) throw ApiError.BadRequest("Такого поста не существует!");
+      if(!user) throw ApiError.BadRequest("Такого пользователя не существует!");
+
+      const foundPost = await postModel.findOne({where: {id: postId, user_id: userId}, transaction});
+
+      if(!foundPost) throw ApiError.BadRequest("Пост пренадлежит другому пользователю!");
+
+      const newPost = await postModel.update(
+        { title, content},
+        { where: {id: postId}, transaction }
+      );
+
+      const postData = new PostDto({id: postId, title, content, user_id: userId});
+
+      await tagService.addTags(post.id, tags, transaction);
+
+      await transaction.commit();
+      return postData;
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
+  }
+
+  async removePost(userId, postId) {
+    const transaction = await db.transaction({ autocommit: false });
+
+    try {
+      const user = await userModel.findOne({where: {id: userId}, transaction});
+      const post = await postModel.findOne({where: {id: postId}, transaction});
+
+      if(!post) throw ApiError.BadRequest("Такого поста не существует!");
+      if(!user) throw ApiError.BadRequest("Такого пользователя не существует!");
+
+      const foundPost = await postModel.findOne({where: {id: postId, user_id: userId}, transaction});
+
+      if(!foundPost) throw ApiError.BadRequest("Пост принадлежит другому пользователю!");
+
+      await foundPost.destroy({transaction});
+
+      const postData = new PostDto(foundPost);
+
+      await transaction.commit();
+      return postData;
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
+  }
+
+  async getAllPosts(query = '', page = 1, limit = 2) {
+    try {
+      const offset = (page - 1) * limit;
+      const {count, posts} = await postModel.searchPosts(query, limit, offset);
+  
+      // const postsWithTags = posts.map(post => {
+      //   const tags = post.tags.map(tag => tag.name); // Получаем массив названий тегов
+      //   return {
+      //     ...post.toJSON(),
+      //     tags
+      //   };
+      // });
+
+      const postsWithTagsAndPhotos = await Promise.all(
+        posts.map(async (post) => {
+            const tags = post.tags.map((tag) => tag.name); // Массив названий тегов
+
+            // Преобразуем фотографии в base64
+            const photos = await Promise.all(
+                post.photos.map(async (photo) => {
+                    const filePath = path.join(__dirname, "..", photo.path); // Полный путь к файлу
+                    const fileData = fs.readFileSync(filePath); // Читаем файл
+                    const base64 = fileData.toString("base64"); // Преобразуем в base64
+                    return {
+                        filename: photo.filename,
+                        data: `data:image/jpeg;base64,${base64}`, // Формируем Data URL
+                    };
+                })
+            );
+
+            return {
+                ...post.toJSON(),
+                tags,
+                photos,
+            };
+        })
+    );
+  
+      return {
+        posts: postsWithTagsAndPhotos,
+        totalPosts: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+
+  async getPostById(id) {
+    const post = await postModel.findOne({where: {id}});
+    const tags = await tagService.getTags(id);
+    const photos = await photoService.getPhotosById(id);
+
+    const photoBase64 = photos.map((photo) => {
+      const filePath = path.join(__dirname, "..", photo.path);
+      const fileData = fs.readFileSync(filePath); 
+      const base64 = fileData.toString("base64"); 
+      return {
+          id: photo.id,
+          filename: photo.filename,
+          data: `data:image/jpeg;base64,${base64}`,
+      };
+  });
+
+    const comments = await commentService.getAllByPostId(id);
+
+    return {...post.dataValues, 
+      tags, 
+      comments: comments.coms,
+      commentsCount: comments.count, 
+      photos: photoBase64};
+  }
+
+  async getMyPosts(query = '', page = 1, limit = 2, user_id) {
+    try {
+      const offset = (page - 1) * limit;
+      const {count, posts} = await postModel.searchPosts(query, limit, offset, user_id);
+  
+      const postsWithTagsAndPhotos = await Promise.all(
+        posts.map(async (post) => {
+            const tags = post.tags.map((tag) => tag.name); // Массив названий тегов
+
+            const photos = await Promise.all(
+                post.photos.map(async (photo) => {
+                    const filePath = path.join(__dirname, "..", photo.path); // Полный путь к файлу
+                    const fileData = fs.readFileSync(filePath); // Читаем файл
+                    const base64 = fileData.toString("base64"); // Преобразуем в base64
+                    return {
+                        filename: photo.filename,
+                        data: `data:image/jpeg;base64,${base64}`, // Формируем Data URL
+                    };
+                })
+            );
+
+            return {
+                ...post.toJSON(),
+                tags,
+                photos,
+            };
+        })
+    );
+  
+      return {
+        posts: postsWithTagsAndPhotos,
+        totalPosts: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+}
+
+module.exports = new PostService();
+const postTagModel = require("../models/postTagModel");
+const tagModel = require("../models/tagModel");
+
+class TagService {
+  async addTags(postId, tags, transaction) {
+    if (tags && tags.length > 0)
+      for (const tagName of tags) {
+        let tag = await tagModel.findOne({
+          where: { name: tagName },
+          transaction,
+        });
+
+        if (!tag)
+          tag = await tagModel.create({ name: tagName }, { transaction });
+        if (!tag) throw ApiError.BadRequest("Ошибка с тегами!");
+
+        const isRecordPostTag = await postTagModel.findOne({
+          where: { tag_id: tag.id, post_id: postId },
+        });
+        if (!isRecordPostTag)
+          await postTagModel.create(
+            { post_id: postId, tag_id: tag.id },
+            { transaction }
+          );
+      }
+  }
+
+  async getTags(post_id, all) {
+    const postTags = await postTagModel.findAll({
+      where: {post_id},
+      include: {
+        model: tagModel,
+        attributes: ['name']
+      },
+      attributes: ['post_id', 'tag_id']
+    });
+
+    const tagNames = postTags.map(tag => tag.tag.name);
+    return tagNames;
+  }
+
+}
+
+module.exports = new TagService();const jwt = require('jsonwebtoken');
+const tokenModel = require('../models/tokenModel');
+const db = require('../database');
+const { where } = require('sequelize');
+
+class TokenService {
+    generateTokens(payload) {
+        const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {expiresIn: '1d'})
+        const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {expiresIn: '30d'})
+        return {
+            accessToken,
+            refreshToken
+        }
+    }
+
+    async saveToken(userId, refreshToken, _transaction) {
+        const transaction = _transaction || await db.transaction({autocommit: false})        
+
+        try{
+            const tokenData = await tokenModel.findOne({
+                where:{
+                    user_id: userId
+                },
+                transaction
+            });
+            if (tokenData) {
+                tokenData.refresh_token = refreshToken;
+                return tokenData.save(
+                    {transaction}
+                );
+            }
+            const token = await tokenModel.create({user_id: userId, refresh_token: refreshToken}, {
+                transaction
+            });
+
+            if(!transaction) await transaction.commit();
+            return token;
+        } catch(e) {
+            if(!transaction) await transaction.rollback();
+            throw e;
+        }
+    }
+
+    validateAccessToken(token) {
+        try {
+            const userData = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+            return userData;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    validateRefreshToken(token) {
+        try {
+            const userData = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+            return userData;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async removeToken(refreshToken, transaction) {
+        const tokenData = await tokenModel.destroy({
+            where: { refresh_token: refreshToken},
+            transaction
+        })
+        return tokenData;
+    }
+
+    async findToken(refreshToken, transaction) {
+        const tokenData = await tokenModel.findOne({
+            where: {
+                refresh_token: refreshToken
+            },
+            transaction
+        })
+        return tokenData;
+    }
+}
+
+module.exports = new TokenService();const db = require("../database");
+const UserDto = require("../dtos/userDto");
+const emailVerificationModel = require("../models/emailVerificationModel");
+const userModel = require("../models/userModel");
+const mailService = require("./mailService");
+const tokenService = require("./tokenService");
+const uuid = require("uuid");
+const bcrypt = require("bcrypt");
+const ApiError = require("../exceptions/api-error");
+
+class UserService {
+  async signup(email, password, username) {
+    const transaction = await db.transaction({ autocommit: false });
+
+    try {
+      const candidate = await userModel.findOne({
+        where: { email },
+        transaction,
+      });
+      if (candidate) {
+        throw ApiError.BadRequest(
+          `Пользователь с почтовым адресом ${email} уже существует`
+        );
+      }
+
+      const userId = uuid.v4();
+      const activationLink = uuid.v4();
+      const hashPassword = await bcrypt.hash(password, 10);
+
+      const user = await userModel.create(
+        { id: userId, email, password_hash: hashPassword, username },
+        { transaction }
+      );
+      const emailStatus = await emailVerificationModel.create(
+        { user_id: userId, activation_link: activationLink },
+        { transaction }
+      );
+
+      const userDto = new UserDto(user); // id, email, isActivated
+      const tokens = tokenService.generateTokens({ ...userDto });
+      await tokenService.saveToken(
+        userDto.id,
+        tokens.refreshToken,
+        transaction
+      );
+
+      await mailService.sendActivationMail(
+        email,
+        `${process.env.API_URL}/api/activate/${activationLink}`
+      );
+
+      transaction.commit();
+      return { ...tokens, user: { ...userDto, isActivated: emailStatus.status}};
+    } catch (e) {
+      transaction.rollback();
+      throw e;
+    }
+  }
+
+  async signin(email, password) {
+    const transaction = await db.transaction({ autocommit: false });
+
+    try {
+      const user = await userModel.findOne({
+        where: { email },
+        include: {model: emailVerificationModel, as: "email_verifications"}, 
+        transaction,
+      });
+      if (!user) {
+        throw ApiError.BadRequest(
+          `Пользователь с почтовым адресом ${email} не существует`
+        );
+      }
+
+      const isPassEquals = await bcrypt.compare(password, user.password_hash);
+      if (!isPassEquals) {
+        throw ApiError.BadRequest("Неверный пароль");
+      }
+
+      const userDto = new UserDto(user);
+      const tokens = tokenService.generateTokens({ ...userDto });
+
+      console.log("SignIN >>>>>>>>>>> : ", userDto, tokens.refreshToken);
+
+      await tokenService.saveToken(
+        userDto.id,
+        tokens.refreshToken,
+        transaction
+      );
+
+      await transaction.commit();
+      return { ...tokens, user: { ...userDto, isActivated: user.email_verifications[0]?.status} };
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
+  }
+
+  async signout(refreshToken) {
+    const transaction = await db.transaction({ autocommit: false });
+    try {
+      const token = await tokenService.removeToken(refreshToken, transaction);
+      await transaction.commit();
+      return token;
+    } catch (e) {
+      await transaction.rollback();
+      throw e;
+    }
+  }
+
+  async activate(activationLink) {
+    const transaction = await db.transaction({ autocommit: false });
+    try {
+      const emailVerificationRecord = await emailVerificationModel.findOne({
+        where: {
+          activation_link: activationLink,
+        },
+      });
+
+      const user = await userModel.findOne({
+        where: { id: emailVerificationRecord.user_id },
+        transaction,
+      });
+
+      if (!emailVerificationModel || !user) {
+        throw ApiError.BadRequest("Неккоректная ссылка активации");
+      }
+
+      emailVerificationRecord.status = true;
+      await emailVerificationRecord.save();
+
+      transaction.commit();
+      return user;
+    } catch (e) {
+      transaction.rollback();
+      throw e;
+    }
+  }
+
+  async refresh(refreshToken) {
+    const transaction = await db.transaction({autocommit: false});
+    try{
+      if (!refreshToken) {
+        throw ApiError.UnauthorizedError();
+      }
+
+      const userData = tokenService.validateRefreshToken(refreshToken);
+      const tokenFromDb = await tokenService.findToken(refreshToken, transaction);
+      
+        if (!userData || !tokenFromDb) { //!tokenFromDb
+          throw ApiError.UnauthorizedError();
+        }
+
+        const user = await userModel.findOne({
+            where: {id: userData.id},
+            include: {model: emailVerificationModel, as: "email_verifications"}, 
+            transaction
+        });
+    
+        if(!user) throw ApiError.BadRequest("Некорректный токен!");
+    
+        const userDto = new UserDto(user);
+        const tokens = tokenService.generateTokens({...userDto});
+
+    
+        await tokenService.saveToken(
+            userDto.id,
+            tokens.refreshToken,
+            transaction
+        );
+
+        await transaction.commit();
+        return {...tokens, user: { ...userDto, isActivated: user.email_verifications[0]?.status}}
+      }catch(e) {
+        await transaction.rollback();
+        throw e;
+      }
+  }
+
+  async getUsers() {
+    const users = await userModel.findAll();
+    if(!users) throw ApiError.BadRequest("Ошибка в getusers()")
+    return users;
+  }
+}
+
+module.exports = new UserService();
+module.exports = class ApiError extends Error {
+    status;
+    errors;
+
+    constructor(status, message, errors = []) {
+        super(message);
+        this.status = status;
+        this.errors = errors;
+    }
+
+    static UnauthorizedError() {
+        return new ApiError(401, 'Пользователь не авторизован')
+    }
+
+    static BadRequest(message, errors = []) {
+        return new ApiError(400, message, errors);
+    }
+}const Router = require('express').Router;
+const router = new Router();
+const {body} = require('express-validator');
+const userController = require('../controllers/userController');
+const postController = require('../controllers/postController');
+const authMiddleware = require('../middlewares/auth-middleware');
+const commentModel = require('../models/commentModel');
+const commentController = require('../controllers/commentController');
+const upload = require('../config/multer');
+const photoController = require('../controllers/photoController');
+
+router.post("/signup",
+    body('email').isEmail().withMessage("Ведите корректный email!"),
+    body('password').isLength({min: 8, max: 32}).withMessage("Пароль должен соддержать минимум 8 символов!"),
+    body('username').isLength({min: 1, max: 20}).withMessage("Ведите корректное имя пользователя!"),
+    userController.signup
+);
+
+router.post("/signin", 
+    body('email').isEmail().withMessage("Ведите корректный email!"),
+    body('password').isLength({min: 8, max: 32}).withMessage("Пароль должен соддержать минимум 8 символов!"),
+    userController.signin
+);
+
+router.post("/signout", userController.signout);
+
+router.get("/refresh", userController.refresh);
+
+router.get('/activate/:link', userController.activate);
+router.get('/getusers', userController.getUsers)
+
+router.post(
+  "/createpost",
+  body("title").isLength({ min: 3, max: 200 }).withMessage("Длинна заголовка должна быть больше 3 символов!"),
+  body("content").isLength({ min: 2, max: 1000 }).withMessage("Длинна текста должна быть больше 3 символов!"),
+  body("tags").matches(/^[a-zа-яА-ЯA-Z0-9_]+$/).withMessage("Теги не должны включать инные символы кроме цифр и букв (русские и англ)!"),
+  authMiddleware,
+  postController.createPost
+);
+router.post(
+  "/updatepost",
+  body("title").isLength({ min: 3, max: 200 }),
+  body("content").isLength({ min: 2, max: 2000 }),
+  authMiddleware,
+  postController.updatePost
+);
+router.post(
+    "/removepost",
+    authMiddleware,
+    postController.removePost
+);
+
+router.post(
+    "/createcomment",
+    body("content").isLength({min: 2, max: 1000}),
+    authMiddleware,
+    commentController.createComment
+);
+
+router.post(
+  "/updatecomment",
+  body("content").isLength({min: 2, max: 1000}),
+  authMiddleware,
+  commentController.updateComment
+);
+
+router.post(
+  "/removecomment",
+  authMiddleware,
+  commentController.removeComment
+)
+router.get(
+  "/getposts",
+  postController.getPosts
+)
+router.get(
+  "/getpost",
+  postController.getPostById
+)
+router.get(
+  "/getmyposts",
+  authMiddleware,
+  postController.getMyPosts
+)
+router.post("/getpostcomments", commentController.getAllByPostId);
+
+router.post("/addphoto", 
+            authMiddleware,
+            upload.single('photo'),
+            photoController.addPhoto);
+router.post("/updatephoto", 
+            authMiddleware,
+            upload.single('photo'),
+            photoController.updatePhoto);
+router.post("/removephoto",
+            authMiddleware,
+            photoController.removePhoto)
+
+
+module.exports = router;

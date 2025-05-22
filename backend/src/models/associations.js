@@ -9,6 +9,9 @@ const tagModel = require("./tagModel");
 const refreshTokenModel = require("./tokenModel");
 const userModel = require("./userModel");
 
+const notificationModel = require("./notificationModel");
+
+
 userModel.hasOne(refreshTokenModel, {
   foreignKey: "user_id",
 });
@@ -71,6 +74,9 @@ PhotoModel.belongsTo(postModel, {foreignKey: "postId", onDelete: "CASCADE"});
 
 commentModel.hasMany(PhotoModel, {foreignKey: "commentId", onDelete: "CASCADE"});
 PhotoModel.belongsTo(commentModel, {foreignKey: "commentId", onDelete: "CASCADE"});
+
+userModel.hasMany(notificationModel, { foreignKey: "user_id", onDelete: "CASCADE" });
+notificationModel.belongsTo(userModel, { foreignKey: "user_id" });
 
 
 module.exports = {

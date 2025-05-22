@@ -22,6 +22,14 @@ const userModel = db.define("users", {
   role_id: {
     type: Sequelize.DataTypes.INTEGER,
     defaultValue: 1
+  },
+  latitude: {
+    type: Sequelize.DataTypes.FLOAT,
+    allowNull: true
+  },
+  longitude: {
+    type: Sequelize.DataTypes.FLOAT,
+    allowNull: true
   }
 });
 

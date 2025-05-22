@@ -49,6 +49,7 @@
     top: 80px;
     background: var(--primary-green);
     padding: 5px;
+    z-index: 1000;
 }
 
 .header-profile-menu-item {
@@ -126,3 +127,24 @@
     border-bottom: 2px solid var(--accent-orange);
     background: var(--accent-orange);
 }
+
+
+.header-profile-menu-item:first-child {
+    position: relative;
+}
+
+.header-profile-menu-item:first-child .notification-badge {
+    position: absolute;
+    top: 0px;
+    right: 70px;
+    background: red;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 50%;
+    width: 15px;
+    height: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }

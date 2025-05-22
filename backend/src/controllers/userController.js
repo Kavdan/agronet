@@ -88,6 +88,16 @@ class UserController {
             next(e);
         }
     }
+
+    async updateNotification(req, res, next) {
+        try {
+            const {id} = req.body;
+            const notification = await userService.updateNotification(id);
+            return res.json(notification);
+        } catch (e) {
+            next(e);
+        }
+    }
 }
 
 module.exports = new UserController();

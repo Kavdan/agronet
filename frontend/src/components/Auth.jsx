@@ -12,7 +12,7 @@ export const Auth = observer(({ isRegistration }) => {
 
   const handleSignIn = async () => {
     const res = await userStore.signIn(email, password);
-    nav("/ps")
+    nav("/")
   };
 
   const handleSignUp = async () => {
