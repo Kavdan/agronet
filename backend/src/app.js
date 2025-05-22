@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-    origin: "http://localhost:5173",  // Allow only your frontend to access
+    origin: "https://agronet.onrender.com", 
     methods: "GET,POST,PUT,DELETE",
     allowedHeaders: "Content-Type,Authorization",
     credentials: true
@@ -37,6 +37,7 @@ app.use(errorMiddleware);
 
 const start = async () => {
     try {
+        await db.sync({alter:true});
         app.listen(PORT, () => console.log(`Server started on PORT = ${PORT}`))
     } catch (e) {
         console.log(e);
