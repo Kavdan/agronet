@@ -37,7 +37,7 @@ app.use(errorMiddleware);
 
 const start = async () => {
     try {
-        await db.sync({alter:true});
+        await db.sync();
         await Promise.all([
             roleModel.findOrCreate({
                 where: { id: 1 },
