@@ -118,53 +118,53 @@ class PostService {
   }
 
   async getAllPosts(query = '', page = 1, limit = 2) {
-    try {
-      const offset = (page - 1) * limit;
-      const {count, posts} = await postModel.searchPosts(query, limit, offset);
-  
-      // const postsWithTags = posts.map(post => {
-      //   const tags = post.tags.map(tag => tag.name); // Получаем массив названий тегов
-      //   return {
-      //     ...post.toJSON(),
-      //     tags
-      //   };
-      // });
+  try {
+    const offset = (page - 1) * limit;
+    const { count, posts } = await postModel.searchPosts(query, limit, offset);
 
-      const postsWithTagsAndPhotos = await Promise.all(
-        posts.map(async (post) => {
-            const tags = post.tags.map((tag) => tag.name); // Массив названий тегов
+    const postsWithTagsAndPhotos = await Promise.all(
+      posts.map(async (post) => {
+        // Защита от отсутствующих тегов
+        const tags = (post.tags || []).map(tag => tag.name);
 
-            // Преобразуем фотографии в base64
-            const photos = await Promise.all(
-                post.photos.map(async (photo) => {
-                    const filePath = path.join(__dirname, "..", photo.path); // Полный путь к файлу
-                    const fileData = fs.readFileSync(filePath); // Читаем файл
-                    const base64 = fileData.toString("base64"); // Преобразуем в base64
-                    return {
-                        filename: photo.filename,
-                        data: `data:image/jpeg;base64,${base64}`, // Формируем Data URL
-                    };
-                })
-            );
+        // Защита от отсутствующих фото + безопасное чтение файлов
+        const photos = await Promise.all(
+          (post.photos || []).map(async (photo) => {
+            const filePath = path.join(__dirname, "..", photo.path);
+            try {
+              const fileData = await fs.readFile(filePath);
+              const base64 = fileData.toString("base64");
+              return {
+                filename: photo.filename,
+                data: `data:image/jpeg;base64,${base64}`,
+              };
+            } catch (err) {
+              console.warn(`Фото ${photo.filename} не удалось прочитать: ${err.message}`);
+              return null;
+            }
+          })
+        );
 
-            return {
-                ...post.toJSON(),
-                tags,
-                photos,
-            };
-        })
+        return {
+          ...post.toJSON(),
+          tags,
+          photos: photos.filter(Boolean), // удаляем null
+        };
+      })
     );
-  
-      return {
-        posts: postsWithTagsAndPhotos,
-        totalPosts: count,
-        totalPages: Math.ceil(count / limit),
-        currentPage: page,
-      };
-    } catch (error) {
-      throw error;
-    }
+
+    return {
+      posts: postsWithTagsAndPhotos,
+      totalPosts: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    };
+
+  } catch (error) {
+    console.error("Ошибка при получении постов:", error);
+    throw error;
   }
+}
   
 
   async getPostById(id) {
