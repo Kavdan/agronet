@@ -117,7 +117,7 @@ class PostService {
     }
   }
 
- async function getAllPosts(query = '', page = 1, limit = 2) {
+ async getAllPosts(query = '', page = 1, limit = 2) {
   try {
     const offset = (page - 1) * limit;
     const { count, posts } = await postModel.searchPosts(query, limit, offset);
