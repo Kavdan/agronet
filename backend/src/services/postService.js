@@ -117,21 +117,20 @@ class PostService {
     }
   }
 
-  async getAllPosts(query = '', page = 1, limit = 2) {
+ async function getAllPosts(query = '', page = 1, limit = 2) {
   try {
     const offset = (page - 1) * limit;
     const { count, posts } = await postModel.searchPosts(query, limit, offset);
 
     const postsWithTagsAndPhotos = await Promise.all(
       posts.map(async (post) => {
-        // Защита от отсутствующих тегов
         const tags = (post.tags || []).map(tag => tag.name);
 
-        // Защита от отсутствующих фото + безопасное чтение файлов
         const photos = await Promise.all(
           (post.photos || []).map(async (photo) => {
             const filePath = path.join(__dirname, "..", photo.path);
             try {
+              await fs.access(filePath); // Проверяем, существует ли файл
               const fileData = await fs.readFile(filePath);
               const base64 = fileData.toString("base64");
               return {
@@ -139,7 +138,7 @@ class PostService {
                 data: `data:image/jpeg;base64,${base64}`,
               };
             } catch (err) {
-              console.warn(`Фото ${photo.filename} не удалось прочитать: ${err.message}`);
+              console.warn(`⚠️ Файл не найден или не читается: ${filePath}`);
               return null;
             }
           })
@@ -148,7 +147,7 @@ class PostService {
         return {
           ...post.toJSON(),
           tags,
-          photos: photos.filter(Boolean), // удаляем null
+          photos: photos.filter(Boolean),
         };
       })
     );
@@ -161,7 +160,7 @@ class PostService {
     };
 
   } catch (error) {
-    console.error("Ошибка при получении постов:", error);
+    console.error("🔥 Ошибка при получении постов:", error);
     throw error;
   }
 }
