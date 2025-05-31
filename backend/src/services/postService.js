@@ -188,7 +188,10 @@ class PostService {
                     const filePath = path.join(__dirname, "..", photo.path); // Полный путь к файлу
                    if (!fs.existsSync(filePath)) {
   console.warn(`Файл не найден: ${filePath}`);
-  return null; // или обработайте ошибку корректно
+  return {
+                        filename: photo.filename,
+                        data: `data:image/jpeg;base64,${base64}`, // Формируем Data URL
+                    }; // или обработайте ошибку корректно
 }
                     const fileData = fs.readFileSync(filePath); // Читаем файл
                     const base64 = fileData.toString("base64"); // Преобразуем в base64
