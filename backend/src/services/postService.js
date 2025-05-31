@@ -190,7 +190,7 @@ class PostService {
   console.warn(`Файл не найден: ${filePath}`);
   return {
                         filename: photo.filename,
-                        data: `data:image/jpeg;base64,${base64}`, // Формируем Data URL
+                        data: `data:image/jpeg;base64`, // Формируем Data URL
                     }; // или обработайте ошибку корректно
 }
                     const fileData = fs.readFileSync(filePath); // Читаем файл
