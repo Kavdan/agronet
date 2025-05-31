@@ -117,54 +117,128 @@ class PostService {
     }
   }
 
- async getAllPosts(query = '', page = 1, limit = 2) {
-  try {
-    const offset = (page - 1) * limit;
-    const { count, posts } = await postModel.searchPosts(query, limit, offset);
+//  async getAllPosts(query = '', page = 1, limit = 2) {
+//   try {
+//     const offset = (page - 1) * limit;
+//     const { count, posts } = await postModel.searchPosts(query, limit, offset);
 
-    const postsWithTagsAndPhotos = await Promise.all(
-      posts.map(async (post) => {
-        const tags = (post.tags || []).map(tag => tag.name);
+//     const postsWithTagsAndPhotos = await Promise.all(
+//       posts.map(async (post) => {
+//         const tags = (post.tags || []).map(tag => tag.name);
 
-        const photos = await Promise.all(
-          (post.photos || []).map(async (photo) => {
-            const filePath = path.join(__dirname, "..", photo.path);
-            try {
-              await fs.access(filePath); // Проверяем, существует ли файл
-              const fileData = await fs.readFile(filePath);
-              const base64 = fileData.toString("base64");
-              return {
-                filename: photo.filename,
-                data: `data:image/jpeg;base64,${base64}`,
-              };
-            } catch (err) {
-              console.warn(`⚠️ Файл не найден или не читается: ${filePath}`);
-              return null;
-            }
-          })
-        );
+//         const photos = await Promise.all(
+//           (post.photos || []).map(async (photo) => {
+//             const filePath = path.join(__dirname, "..", photo.path);
+//             try {
+//               await fs.access(filePath); // Проверяем, существует ли файл
+//               const fileData = await fs.readFile(filePath);
+//               const base64 = fileData.toString("base64");
+//               return {
+//                 filename: photo.filename,
+//                 data: `data:image/jpeg;base64,${base64}`,
+//               };
+//             } catch (err) {
+//               console.warn(`⚠️ Файл не найден или не читается: ${filePath}`);
+//               return null;
+//             }
+//           })
+//         );
 
-        return {
-          ...post.toJSON(),
-          tags,
-          photos: photos.filter(Boolean),
-        };
-      })
-    );
+//         return {
+//           ...post.toJSON(),
+//           tags,
+//           photos: photos.filter(Boolean),
+//         };
+//       })
+//     );
 
-    return {
-      posts: postsWithTagsAndPhotos,
-      totalPosts: count,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-    };
+//     return {
+//       posts: postsWithTagsAndPhotos,
+//       totalPosts: count,
+//       totalPages: Math.ceil(count / limit),
+//       currentPage: page,
+//     };
 
-  } catch (error) {
-    console.error("🔥 Ошибка при получении постов:", error);
-    throw error;
-  }
-}
+//   } catch (error) {
+//     console.error("🔥 Ошибка при получении постов:", error);
+//     throw error;
+//   }
+// }
+
+  async getAllPosts(query = '', page = 1, limit = 2) {
+    try {
+      const offset = (page - 1) * limit;
+      const {count, posts} = await postModel.searchPosts(query, limit, offset);
   
+      // const postsWithTags = posts.map(post => {
+      //   const tags = post.tags.map(tag => tag.name); // Получаем массив названий тегов
+      //   return {
+      //     ...post.toJSON(),
+      //     tags
+      //   };
+      // });
+
+      const postsWithTagsAndPhotos = await Promise.all(
+        posts.map(async (post) => {
+            const tags = post.tags.map((tag) => tag.name); // Массив названий тегов
+
+            // Преобразуем фотографии в base64
+            const photos = await Promise.all(
+                post.photos.map(async (photo) => {
+                    const filePath = path.join(__dirname, "..", photo.path); // Полный путь к файлу
+                    const fileData = fs.readFileSync(filePath); // Читаем файл
+                    const base64 = fileData.toString("base64"); // Преобразуем в base64
+                    return {
+                        filename: photo.filename,
+                        data: `data:image/jpeg;base64,${base64}`, // Формируем Data URL
+                    };
+                })
+            );
+
+            return {
+                ...post.toJSON(),
+                tags,
+                photos,
+            };
+        })
+    );
+  
+      return {
+        posts: postsWithTagsAndPhotos,
+        totalPosts: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+
+  // async getPostById(id) {
+  //   const post = await postModel.findOne({where: {id}});
+  //   const tags = await tagService.getTags(id);
+  //   const photos = await photoService.getPhotosById(id);
+
+  //   const photoBase64 = photos.map((photo) => {
+  //     const filePath = path.join(__dirname, "..", photo.path);
+  //     const fileData = fs.readFileSync(filePath); 
+  //     const base64 = fileData.toString("base64"); 
+  //     return {
+  //         id: photo.id,
+  //         filename: photo.filename,
+  //         data: `data:image/jpeg;base64,${base64}`,
+  //     };
+  // });
+
+  //   const comments = await commentService.getAllByPostId(id);
+
+  //   return {...post.dataValues, 
+  //     tags, 
+  //     comments: comments.coms,
+  //     commentsCount: comments.count, 
+  //     photos: photoBase64};
+  // }
 
   async getPostById(id) {
     const post = await postModel.findOne({where: {id}});
@@ -182,14 +256,6 @@ class PostService {
       };
   });
 
-    const comments = await commentService.getAllByPostId(id);
-
-    return {...post.dataValues, 
-      tags, 
-      comments: comments.coms,
-      commentsCount: comments.count, 
-      photos: photoBase64};
-  }
 
   async getMyPosts(query = '', page = 1, limit = 2, user_id) {
     try {
