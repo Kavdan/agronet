@@ -186,6 +186,10 @@ class PostService {
             const photos = await Promise.all(
                 post.photos.map(async (photo) => {
                     const filePath = path.join(__dirname, "..", photo.path); // Полный путь к файлу
+                   if (!fs.existsSync(filePath)) {
+  console.warn(`Файл не найден: ${filePath}`);
+  return null; // или обработайте ошибку корректно
+}
                     const fileData = fs.readFileSync(filePath); // Читаем файл
                     const base64 = fileData.toString("base64"); // Преобразуем в base64
                     return {
