@@ -254,6 +254,14 @@ class PostService {
 
     const photoBase64 = photos.map((photo) => {
       const filePath = path.join(__dirname, "..", photo.path);
+       if (!fs.existsSync(filePath)) {
+  console.warn(`Файл не найден: ${filePath}`);
+  return {
+                        id: photo.id,
+                        filename: photo.filename,
+                        data: `data:image/jpeg;base64`, // Формируем Data URL
+                    }; // или обработайте ошибку корректно
+}
       const fileData = fs.readFileSync(filePath); 
       const base64 = fileData.toString("base64"); 
       return {
