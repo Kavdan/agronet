@@ -240,7 +240,7 @@ class PostService {
   //     photos: photoBase64};
   // }
 
-  async getPostById(id) {
+ async getPostById(id) {
     const post = await postModel.findOne({where: {id}});
     const tags = await tagService.getTags(id);
     const photos = await photoService.getPhotosById(id);
@@ -255,6 +255,15 @@ class PostService {
           data: `data:image/jpeg;base64,${base64}`,
       };
   });
+
+    const comments = await commentService.getAllByPostId(id);
+
+    return {...post.dataValues, 
+      tags, 
+      comments: comments.coms,
+      commentsCount: comments.count, 
+      photos: photoBase64};
+  }
 
 
   async getMyPosts(query = '', page = 1, limit = 2, user_id) {
