@@ -41,11 +41,11 @@ const start = async () => {
         await Promise.all([
             roleModel.findOrCreate({
                 where: { id: 1 },
-                defaults: { name: 'user' }
+                defaults: { role: 'user' }
             }),
             roleModel.findOrCreate({
                 where: { id: 2 },
-                defaults: { name: 'admin' }
+                defaults: { role: 'admin' }
             })
         ]);
         app.listen(PORT, () => console.log(`Server started on PORT = ${PORT}`))
